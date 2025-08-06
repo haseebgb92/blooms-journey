@@ -12,6 +12,8 @@ import { fontBody, fontHeadline } from '@/lib/fonts';
 import { auth } from '@/lib/firebase/clientApp';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { BabyNotificationPopup } from '@/components/bloom-journey/BabyNotificationPopup';
+import { FloatingNotificationButton } from '@/components/layout/FloatingNotificationButton';
 
 
 export default function RootLayout({
@@ -41,6 +43,36 @@ export default function RootLayout({
   }, []);
 
   const isAuthenticated = !!user;
+
+  useEffect(() => {
+    if (isClient && isAuthenticated) {
+      // Start the notification service
+      const startNotificationService = async () => {
+        try {
+          const { notificationService } = await import('@/lib/notificationService');
+          notificationService.startNotificationCheck();
+        } catch (error) {
+          console.error('Error starting notification service:', error);
+        }
+      };
+      
+      startNotificationService();
+
+      // Cleanup on unmount
+      return () => {
+        const cleanup = async () => {
+          try {
+            const { notificationService } = await import('@/lib/notificationService');
+            notificationService.stopNotificationCheck();
+          } catch (error) {
+            console.error('Error stopping notification service:', error);
+          }
+        };
+        cleanup();
+      };
+    }
+  }, [isClient, isAuthenticated]);
+
   const showNav = isAuthenticated && !noNavRoutes.includes(pathname);
   const showHeader = showNav && !isMobile;
   const showBottomNav = showNav && isMobile;
@@ -65,6 +97,8 @@ export default function RootLayout({
             {isClient && showHeaderOnProfileMobile && <AppHeader />}
             <main className={`flex-1 ${showBottomNav ? 'pb-16' : ''}`}>{children}</main>
             {isClient && showBottomNav && <BottomNavBar />}
+            {isClient && isAuthenticated && <BabyNotificationPopup />}
+            {isClient && isMobile && <FloatingNotificationButton />}
           </div>
           <Toaster />
         </ThemeProvider>

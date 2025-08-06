@@ -8,10 +8,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useToast } from '@/hooks/use-toast';
-import { auth, googleProvider, appleProvider, sendPasswordResetEmail } from '@/lib/firebase/clientApp';
+import { auth, googleProvider, appleProvider, sendBrandedPasswordResetEmail } from '@/lib/firebase/clientApp';
 import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { AppleIcon, GoogleIcon } from '@/components/ui/icons';
+import Image from 'next/image';
+
+// Bloom Journey Logo Component
+function BloomJourneyLogo() {
+  return (
+    <div className="flex flex-col items-center mb-0">
+      {/* Logo Image */}
+      <div className="relative w-28 h-28 mb-2">
+        <Image
+          src="/images/icon.png"
+          alt="Bloom Journey Logo"
+          width={112}
+          height={112}
+          className="w-full h-full object-contain"
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -33,9 +52,21 @@ export default function LoginPage() {
       });
       router.push('/home');
     } catch (error: any) {
+      let errorMessage = "Unable to sign in. Please try again.";
+      
+      if (error.code === 'auth/popup-closed-by-user') {
+        errorMessage = "Sign in was cancelled. Please try again.";
+      } else if (error.code === 'auth/popup-blocked') {
+        errorMessage = "Pop-up was blocked. Please allow pop-ups and try again.";
+      } else if (error.code === 'auth/account-exists-with-different-credential') {
+        errorMessage = "An account already exists with this email using a different sign-in method.";
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = "Network error. Please check your connection and try again.";
+      }
+      
       toast({
         title: "Sign In Failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -54,9 +85,25 @@ export default function LoginPage() {
       });
       router.push('/home');
     } catch (error: any) {
+      let errorMessage = "Unable to sign in. Please check your credentials and try again.";
+      
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = "No account found with this email. Please check your email or create a new account.";
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = "Incorrect password. Please try again.";
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = "Please enter a valid email address.";
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = "Too many failed attempts. Please try again later.";
+      } else if (error.code === 'auth/user-disabled') {
+        errorMessage = "This account has been disabled. Please contact support.";
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = "Network error. Please check your connection and try again.";
+      }
+      
       toast({
         title: "Sign In Failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -74,28 +121,52 @@ export default function LoginPage() {
       return;
     }
     try {
-      await sendPasswordResetEmail(auth, email);
+      await sendBrandedPasswordResetEmail(email);
+      
+      // Mask the email for display
+      const maskEmail = (email: string) => {
+        const [localPart, domain] = email.split('@');
+        if (localPart.length <= 2) return email;
+        const maskedLocal = localPart.charAt(0) + '*'.repeat(localPart.length - 2) + localPart.charAt(localPart.length - 1);
+        return `${maskedLocal}@${domain}`;
+      };
+      
+      const maskedEmail = maskEmail(email);
+      
       toast({
         title: "Password Reset Email Sent",
-        description: "Check your inbox for a link to reset your password.",
+        description: `Check your inbox at ${maskedEmail} for a link to reset your password.`,
       });
     } catch (error: any) {
+      let errorMessage = "Unable to send reset email. Please try again.";
+      
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = "No account found with this email address.";
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = "Please enter a valid email address.";
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = "Too many requests. Please try again later.";
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = "Network error. Please check your connection and try again.";
+      }
+      
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
        <Card className="w-full max-w-md shadow-2xl animate-fade-in-down">
             <CardHeader className="text-center">
+                <BloomJourneyLogo />
                 <CardTitle className="text-3xl font-headline text-primary">Welcome Back</CardTitle>
                 <CardDescription>Sign in to continue your Bloom Journey</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4">
                 <div className="grid grid-cols-2 gap-4 mb-4">
                     <Button variant="outline" onClick={() => handleSocialSignIn('google')} disabled={!!isSocialLoading}>
                         {isSocialLoading === 'google' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <GoogleIcon className="mr-2 h-5 w-5" />}

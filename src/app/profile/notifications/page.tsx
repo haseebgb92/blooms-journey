@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Bell, MessageCircle, Music, Smartphone, GlassWater, CalendarDays, Loader2 } from "lucide-react";
+import { ArrowLeft, Bell, MessageCircle, Music, Smartphone, GlassWater, CalendarDays, Loader2, Baby } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -20,6 +20,7 @@ export default function NotificationsPage() {
     const [reminderSms, setReminderSms] = useState(false);
     const [waterReminders, setWaterReminders] = useState(true);
     const [appointmentReminders, setAppointmentReminders] = useState(true);
+    const [babyNotifications, setBabyNotifications] = useState(true);
     const [muteDuration, setMuteDuration] = useState("off");
 
     useEffect(() => {
@@ -36,6 +37,7 @@ export default function NotificationsPage() {
                             setReminderSms(settings.reminderSms ?? false);
                             setWaterReminders(settings.waterReminders ?? true);
                             setAppointmentReminders(settings.appointmentReminders ?? true);
+                            setBabyNotifications(settings.babyNotifications ?? true);
                             setMuteDuration(settings.muteDuration ?? "off");
                         }
                     }
@@ -70,6 +72,7 @@ export default function NotificationsPage() {
             reminderSms,
             waterReminders,
             appointmentReminders,
+            babyNotifications,
             muteDuration
         };
         
@@ -163,6 +166,17 @@ export default function NotificationsPage() {
                                 id="appointment-reminders"
                                 checked={appointmentReminders}
                                 onCheckedChange={setAppointmentReminders}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between p-4 border rounded-lg">
+                           <div className="flex items-center gap-3">
+                                <Baby className="h-5 w-5 text-muted-foreground" />
+                                <Label htmlFor="baby-notifications" className="text-base">Baby Messages</Label>
+                           </div>
+                            <Switch
+                                id="baby-notifications"
+                                checked={babyNotifications}
+                                onCheckedChange={setBabyNotifications}
                             />
                         </div>
                     </CardContent>

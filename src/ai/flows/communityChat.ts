@@ -22,7 +22,7 @@ const chatResponseFlow = ai.defineFlow(
     outputSchema: z.string(),
   },
   async ({message}) => {
-    const prompt = `You are an AI assistant in a community chat for expectant mothers called "Bloom Journey". Your name is "Chloe", a friendly and supportive member of the group.
+    const prompt = `You are an AI assistant in a community chat for expectant mothers called "Bloom Journey". Your name is "Bloom Bot", a friendly and supportive member of the group.
 
 A user has just sent the following message: "${message}"
 
@@ -34,20 +34,32 @@ Examples:
 
 Generate a suitable response to the user's message.`;
 
-    const llmResponse = await ai.generate({
-      model: 'googleai/gemini-2.0-flash',
-      prompt: prompt,
-      config: {
-        temperature: 0.7,
-      },
-    });
+    try {
+      const llmResponse = await ai.generate({
+        model: 'googleai/gemini-2.0-flash',
+        prompt: prompt,
+        config: {
+          temperature: 0.7,
+        },
+      });
 
-    return llmResponse.text;
+      return llmResponse.text;
+    } catch (error) {
+      console.error('AI generation error:', error);
+      // Return a fallback response if AI fails
+      return "I'm here to support you! Feel free to ask any questions about your pregnancy journey.";
+    }
   }
 );
 
 export async function getChatResponse(
   input: ChatResponseInput
 ): Promise<ChatResponseOutput> {
-  return await chatResponseFlow(input);
+  try {
+    return await chatResponseFlow(input);
+  } catch (error) {
+    console.error('Chat response error:', error);
+    // Return a friendly fallback response
+    return "I'm here to support you! Feel free to ask any questions about your pregnancy journey.";
+  }
 }

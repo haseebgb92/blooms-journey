@@ -11,5 +11,11 @@ service cloud.firestore {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
+
+    // Community chat - allow authenticated users to read and write
+    // We'll handle gender restrictions in the application logic
+    match /communityChat/{messageId} {
+      allow read, write: if request.auth != null;
+    }
   }
 }

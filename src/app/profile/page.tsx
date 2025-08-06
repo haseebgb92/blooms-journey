@@ -1,18 +1,18 @@
 
 'use client';
 import { useState, useEffect } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChevronRight, Heart, FileText, Shield, Loader2, UserCircle, Lock, Bell, Briefcase, UserPlus, QrCode, Camera, Palette, Sun, Moon, Laptop, ChevronDown, LogOut, Mail } from "lucide-react";
+import { ChevronRight, Heart, FileText, Shield, Loader2, UserCircle, Lock, Bell, Briefcase, UserPlus, QrCode, Palette, Sun, Moon, Laptop, ChevronDown, LogOut, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose, DialogDescription } from "@/components/ui/dialog";
-import { auth, firestore, storage, ref, uploadBytes, getDownloadURL, updateProfile as updateAuthProfile } from "@/lib/firebase/clientApp";
-import { onAuthStateChanged, User, signOut } from "firebase/auth";
+import { auth, firestore } from "@/lib/firebase/clientApp";
+import { onAuthStateChanged, User, signOut, updateProfile as updateAuthProfile } from "firebase/auth";
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { useTheme } from "next-themes";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -29,18 +29,19 @@ export default function ProfilePage() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [gender, setGender] = useState("mother");
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [editedEmail, setEditedEmail] = useState("");
+  const [editedGender, setEditedGender] = useState("mother");
 
   const [partnerEmail, setPartnerEmail] = useState("");
   const [isSendingInvite, setIsSendingInvite] = useState(false);
 
   const [isAppearanceOpen, setIsAppearanceOpen] = useState(false);
   
-  const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -64,10 +65,14 @@ export default function ProfilePage() {
             setName(data.displayName || currentUser.displayName || "");
             setEmail(data.email || currentUser.email || "");
             setEditedName(data.displayName || currentUser.displayName || "");
+            setGender(data.gender || "mother");
+            setEditedGender(data.gender || "mother");
           } else {
             setName(currentUser.displayName || "");
             setEmail(currentUser.email || "");
             setEditedName(currentUser.displayName || "");
+            setGender("mother");
+            setEditedGender("mother");
           }
           setIsLoading(false);
         }, (error) => {
@@ -127,48 +132,18 @@ export default function ProfilePage() {
     });
   }
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !user) return;
-
-    setIsUploading(true);
-    try {
-        const storageRef = ref(storage, `profile-pictures/${user.uid}/${file.name}`);
-        await uploadBytes(storageRef, file);
-        const photoURL = await getDownloadURL(storageRef);
-
-        await updateAuthProfile(user, { photoURL });
-        const userDocRef = doc(firestore, 'users', user.uid);
-        await setDoc(userDocRef, { photoURL }, { merge: true });
-
-        // Force a re-render to show the new avatar by updating the user state
-        setUser({ ...user, photoURL });
-
-        toast({
-            title: "Profile Picture Updated!",
-            description: "Your new picture has been saved.",
-        });
-    } catch (error: any) {
-        console.error("Error uploading image: ", error);
-        toast({
-            title: "Upload Failed",
-            description: "There was an error uploading your picture. Please try again.",
-            variant: "destructive",
-        });
-    } finally {
-        setIsUploading(false);
-    }
-  };
-
-
   const handleSaveChanges = async () => {
     if (auth.currentUser) {
       try {
         await updateAuthProfile(auth.currentUser, { displayName: editedName });
         const userDocRef = doc(firestore, 'users', auth.currentUser.uid);
-        await setDoc(userDocRef, { displayName: editedName }, { merge: true });
+        await setDoc(userDocRef, { 
+          displayName: editedName,
+          gender: editedGender 
+        }, { merge: true });
         
         setName(editedName);
+        setGender(editedGender);
         setIsEditModalOpen(false);
         toast({
             title: "Profile Updated",
@@ -185,8 +160,11 @@ export default function ProfilePage() {
   };
 
   const getInitials = (name: string) => {
-    if (!name) return 'U';
-    return name.split(' ').map(n => n[0]).join('');
+    if (!name || name.trim() === '') return 'U';
+    const nameParts = name.trim().split(' ').filter(part => part.length > 0);
+    if (nameParts.length === 0) return 'U';
+    if (nameParts.length === 1) return nameParts[0].charAt(0).toUpperCase();
+    return nameParts.slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('');
   }
 
   const connectionUrl = user && typeof window !== 'undefined' ? `${window.location.origin}/connect?partnerId=${user.uid}` : '';
@@ -200,7 +178,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="bg-muted/40 min-h-screen animate-fade-in-up">
+    <div className="bg-muted/40 min-h-screen md:animate-fade-in-up animate-fade-in-mobile">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <header className="mb-8">
             <h1 className="text-4xl font-headline text-primary">Settings</h1>
@@ -210,16 +188,12 @@ export default function ProfilePage() {
             <Card className="shadow-sm">
                 <CardContent className="p-2">
                     <div className="flex items-center gap-4 p-3">
-                        <div className="relative group">
-                            <Avatar className="w-16 h-16 border-2 border-primary">
-                                <AvatarImage src={user?.photoURL || "https://placehold.co/100x100.png"} data-ai-hint="pregnant woman" />
-                                <AvatarFallback>{getInitials(name)}</AvatarFallback>
+                        <div className="relative">
+                            <Avatar className="w-16 h-16 border-2 border-primary bg-primary/10">
+                                <AvatarFallback className="text-xl font-semibold text-primary">
+                                    {getInitials(name)}
+                                </AvatarFallback>
                             </Avatar>
-                            <label htmlFor="avatar-upload" className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                {isUploading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Camera className="h-6 w-6"/>}
-                                <span className="sr-only">Change Picture</span>
-                            </label>
-                            <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
                         </div>
                         <div className="flex-1">
                             <p className="text-xl font-bold">{name}</p>
@@ -262,7 +236,7 @@ export default function ProfilePage() {
                                 </RadioGroup>
                             </div>
                         </ListItem>
-                        <ListItem icon={Briefcase} text="Manage Plan" />
+                        <ListItem icon={Briefcase} text="Manage Plan" comingSoon={true} />
                     </ul>
                 </CardContent>
             </Card>
@@ -273,7 +247,7 @@ export default function ProfilePage() {
                 </CardHeader>
                  <CardContent className="p-2">
                     <ul className="space-y-1">
-                        <ListItem icon={Heart} text="Partner Connection" onClick={() => setIsPartnerModalOpen(true)} />
+                        <ListItem icon={Heart} text="Partner Connection" comingSoon={true} />
                         <ListItem icon={FileText} text="Terms of Service" href="/terms" />
                         <ListItem icon={Shield} text="Privacy Policy" href="/privacy" />
                     </ul>
@@ -303,6 +277,19 @@ export default function ProfilePage() {
                     <Input id="email" type="email" value={editedEmail} disabled />
                      <p className="text-xs text-muted-foreground pt-1">To change your email, please contact support.</p>
                 </div>
+                <div className="space-y-2">
+                    <Label>I am a...</Label>
+                    <RadioGroup value={editedGender} onValueChange={setEditedGender} className="flex flex-col space-y-2">
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="mother" id="edit-mother" />
+                            <Label htmlFor="edit-mother">Mother (Pregnant Person)</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="partner" id="edit-partner" />
+                            <Label htmlFor="edit-partner">Partner/Support Person</Label>
+                        </div>
+                    </RadioGroup>
+                </div>
             </div>
             <DialogFooter>
                 <DialogClose asChild>
@@ -327,7 +314,7 @@ export default function ProfilePage() {
                     <p>Please log in to generate your connection code.</p>
                 )}
                  <Button variant="outline" onClick={handleScanQrCode} className="w-full">
-                    <Camera className="mr-2 h-4 w-4"/>
+                    <Mail className="mr-2 h-4 w-4"/>
                     Scan Your Partner's Code
                 </Button>
             </div>
@@ -363,18 +350,23 @@ export default function ProfilePage() {
   );
 }
 
-function ListItem({ icon: Icon, text, href, onClick, children, isOpen }: { icon: React.ElementType, text: string, href?: string, onClick?: () => void, children?: React.ReactNode, isOpen?: boolean }) {
+function ListItem({ icon: Icon, text, href, onClick, children, isOpen, comingSoon }: { icon: React.ElementType, text: string, href?: string, onClick?: () => void, children?: React.ReactNode, isOpen?: boolean, comingSoon?: boolean }) {
   const content = (
       <div className="flex items-center justify-between p-3 w-full">
           <div className="flex items-center gap-4">
-              <Icon className="h-6 w-6 text-muted-foreground" />
-              <span>{text}</span>
+              <Icon className={`h-6 w-6 ${comingSoon ? 'text-muted-foreground/50' : 'text-muted-foreground'}`} />
+              <span className={comingSoon ? 'text-muted-foreground/70' : ''}>{text}</span>
           </div>
-          {typeof isOpen !== 'undefined' ? (
-              isOpen ? <ChevronDown className="h-5 w-5 text-muted-foreground/50" /> : <ChevronRight className="h-5 w-5 text-muted-foreground/50" />
-          ) : (
-             !children && <ChevronRight className="h-5 w-5 text-muted-foreground/50" />
-          )}
+          <div className="flex items-center gap-2">
+              {comingSoon && (
+                  <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">Coming Soon</span>
+              )}
+              {typeof isOpen !== 'undefined' ? (
+                  isOpen ? <ChevronDown className="h-5 w-5 text-muted-foreground/50" /> : <ChevronRight className="h-5 w-5 text-muted-foreground/50" />
+              ) : (
+                 !children && !comingSoon && <ChevronRight className="h-5 w-5 text-muted-foreground/50" />
+              )}
+          </div>
       </div>
   );
   
@@ -385,9 +377,9 @@ function ListItem({ icon: Icon, text, href, onClick, children, isOpen }: { icon:
     </>
   );
 
-  const commonClasses = "flex flex-col w-full rounded-lg hover:bg-muted transition-colors text-left";
+  const commonClasses = `flex flex-col w-full rounded-lg transition-colors text-left ${comingSoon ? 'opacity-60 cursor-not-allowed' : 'hover:bg-muted cursor-pointer'}`;
 
-  if (href) {
+  if (href && !comingSoon) {
     return (
       <li>
         <Link href={href} className={commonClasses}>
@@ -399,7 +391,7 @@ function ListItem({ icon: Icon, text, href, onClick, children, isOpen }: { icon:
 
   return (
     <li>
-        <div onClick={onClick} className={`${commonClasses} cursor-pointer`}>
+        <div onClick={comingSoon ? undefined : onClick} className={commonClasses}>
             {clickableContent}
         </div>
     </li>

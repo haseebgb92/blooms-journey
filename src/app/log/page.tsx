@@ -382,7 +382,7 @@ function KickCounter() {
 
 export default function LogPage() {
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)] bg-gray-50 animate-fade-in-up">
+    <div className="flex flex-col h-[calc(100vh-80px)] bg-gray-50 md:animate-fade-in-up animate-fade-in-mobile">
       <div className="flex-1 overflow-y-auto p-4 md:p-8">
         <Tabs defaultValue="contractions" className="w-full max-w-4xl mx-auto">
           <TabsList className="grid w-full grid-cols-2">

@@ -16,7 +16,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
   }
 
   return (
-    <div className="bg-muted/40 py-12 animate-fade-in-up">
+    <div className="bg-muted/40 py-12 md:animate-fade-in-up animate-fade-in-mobile">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <Link href="/resources" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">

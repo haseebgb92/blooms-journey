@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { auth, firestore } from '@/lib/firebase/clientApp';
-import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, Timestamp, onSnapshot } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -39,7 +39,10 @@ const calculateTimeLeft = (targetDate: Date) => {
 
 const calculateCurrentWeek = (dueDate: Date | undefined): number | null => {
     if (!dueDate) return null;
-    const week = 40 - Math.ceil(differenceInDays(dueDate, new Date()) / 7);
+    const daysUntilDue = differenceInDays(dueDate, new Date());
+    // Add 5 days to account for due date variance (making the countdown more conservative)
+    const adjustedDaysUntilDue = daysUntilDue + 5;
+    const week = 40 - Math.ceil(adjustedDaysUntilDue / 7);
     return Math.max(1, Math.min(week, 40));
 }
 
@@ -49,27 +52,74 @@ export function DueDateCountdown() {
   const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [currentWeekInput, setCurrentWeekInput] = useState<string>('');
+  const [isDueDateSaved, setIsDueDateSaved] = useState(false);
+  const [hasLoadedDueDate, setHasLoadedDueDate] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     setIsClient(true);
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
-        const userDocRef = doc(firestore, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists() && userDoc.data().dueDate) {
-          setDueDate(userDoc.data().dueDate.toDate());
-        } else {
-           const defaultDueDate = new Date();
-           defaultDueDate.setDate(defaultDueDate.getDate() + 180);
-           setDueDate(defaultDueDate);
+        try {
+          const userDocRef = doc(firestore, "users", user.uid);
+          
+          // Use real-time listener to get updates when due date changes (like AI Pregnancy Pal)
+          const unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
+            if (doc.exists() && doc.data().dueDate) {
+              try {
+                const savedDueDate = doc.data().dueDate.toDate();
+                console.log('DueDateCountdown - Found saved due date:', savedDueDate);
+                setDueDate(savedDueDate);
+                setIsDueDateSaved(true);
+              } catch (timestampError) {
+                console.error('DueDateCountdown - Error converting timestamp:', timestampError);
+                // If timestamp conversion fails, treat as no saved date
+                const defaultDueDate = new Date();
+                defaultDueDate.setDate(defaultDueDate.getDate() + 180);
+                setDueDate(defaultDueDate);
+                setIsDueDateSaved(false);
+              }
+            } else {
+              // If no due date is saved, set a default but DON'T save it automatically
+              // Let the user set their own due date
+              const defaultDueDate = new Date();
+              defaultDueDate.setDate(defaultDueDate.getDate() + 180);
+              setDueDate(defaultDueDate);
+              setIsDueDateSaved(false);
+              // Don't save the default - let user choose their own due date
+            }
+            setHasLoadedDueDate(true);
+            setIsLoading(false);
+          }, (error) => {
+            console.error("Error listening to user data:", error);
+            // Set a temporary default due date for display purposes only
+            const defaultDueDate = new Date();
+            defaultDueDate.setDate(defaultDueDate.getDate() + 180);
+            setDueDate(defaultDueDate);
+            setHasLoadedDueDate(true);
+            setIsLoading(false);
+            // Don't save on error - let user set their own due date
+          });
+
+          return () => unsubscribeSnapshot();
+        } catch (error) {
+          console.error("Error setting up user data listener:", error);
+          // Set a temporary default due date for display purposes only
+          const defaultDueDate = new Date();
+          defaultDueDate.setDate(defaultDueDate.getDate() + 180);
+          setDueDate(defaultDueDate);
+          setHasLoadedDueDate(true);
+          setIsLoading(false);
+          // Don't save on error - let user set their own due date
         }
       } else {
+        // For non-authenticated users, set a temporary default due date
         const defaultDueDate = new Date();
         defaultDueDate.setDate(defaultDueDate.getDate() + 180);
         setDueDate(defaultDueDate);
+        setHasLoadedDueDate(true);
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
     return () => unsubscribe();
@@ -91,14 +141,24 @@ export function DueDateCountdown() {
         try {
             const userDocRef = doc(firestore, "users", user.uid);
             const currentWeek = calculateCurrentWeek(date) || 1;
+            
+            console.log('DueDateCountdown - Saving due date:', date, 'Week:', currentWeek);
+            
+            // Save due date, current week, and timeline week
             await setDoc(userDocRef, { 
               dueDate: Timestamp.fromDate(date),
               currentWeek: currentWeek,
-              timelineWeek: currentWeek
+              timelineWeek: currentWeek,
+              lastUpdated: Timestamp.fromDate(new Date())
             }, { merge: true });
+            
+            console.log('DueDateCountdown - Due date saved successfully');
+            
+            setIsDueDateSaved(true);
+            
             toast({
                 title: "Due Date Saved",
-                description: "Your due date has been updated.",
+                description: `Your due date has been updated. You are currently in Week ${currentWeek}.`,
             });
         } catch (error) {
             console.error("Error saving due date: ", error);
@@ -108,6 +168,13 @@ export function DueDateCountdown() {
                 variant: "destructive"
             });
         }
+      } else {
+        // If user is not authenticated, just update the local state
+        console.log('DueDateCountdown - No user, cannot save due date to Firestore');
+        toast({
+            title: "Due Date Updated",
+            description: "Please log in to save your due date permanently.",
+        });
       }
   }
 

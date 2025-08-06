@@ -1,4 +1,4 @@
-
+'use client';
 import { AiPregnancyPal } from '@/components/bloom-journey/AiPregnancyPal';
 import { AppointmentReminders } from '@/components/bloom-journey/AppointmentReminders';
 import { DueDateCountdown } from '@/components/bloom-journey/DueDateCountdown';
@@ -9,10 +9,11 @@ import { BabyChat } from '@/components/bloom-journey/BabyChat';
 import { WaterIntakeTracker } from '@/components/bloom-journey/WaterIntakeTracker';
 import { QuickJournal } from '@/components/bloom-journey/QuickJournal';
 import Image from 'next/image';
+import { useScrollAnimation } from '@/hooks/use-scroll-animation';
 
 export default function HomePage() {
   return (
-    <div className="bg-background text-foreground animate-fade-in-up">
+    <div className="bg-background text-foreground md:animate-fade-in-up animate-fade-in-mobile">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <header className="relative rounded-xl overflow-hidden mb-8 shadow-lg bg-gradient-to-b from-primary/30 to-primary/50 h-60 flex flex-col justify-end p-6">
           <div className="absolute inset-0 flex items-center justify-center">
@@ -32,21 +33,61 @@ export default function HomePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <PregnancyTimeline />
-            <AiPregnancyPal />
-            <MealPlanner />
-            <Journal />
+            <ScrollAnimatedComponent index={0}>
+              <PregnancyTimeline />
+            </ScrollAnimatedComponent>
+            <ScrollAnimatedComponent index={1}>
+              <AiPregnancyPal />
+            </ScrollAnimatedComponent>
+            <ScrollAnimatedComponent index={2}>
+              <MealPlanner />
+            </ScrollAnimatedComponent>
+            <ScrollAnimatedComponent index={3}>
+              <Journal />
+            </ScrollAnimatedComponent>
           </div>
 
           <div className="space-y-6">
-            <DueDateCountdown />
-            <BabyChat />
-            <QuickJournal />
-            <WaterIntakeTracker />
-            <AppointmentReminders />
+            <ScrollAnimatedComponent index={4}>
+              <DueDateCountdown />
+            </ScrollAnimatedComponent>
+            <ScrollAnimatedComponent index={5}>
+              <BabyChat />
+            </ScrollAnimatedComponent>
+            <ScrollAnimatedComponent index={6}>
+              <QuickJournal />
+            </ScrollAnimatedComponent>
+            <ScrollAnimatedComponent index={7}>
+              <WaterIntakeTracker />
+            </ScrollAnimatedComponent>
+            <ScrollAnimatedComponent index={8}>
+              <AppointmentReminders />
+            </ScrollAnimatedComponent>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ScrollAnimatedComponent({ children, index }: { children: React.ReactNode; index: number }) {
+  const { elementRef, isVisible } = useScrollAnimation({
+    threshold: 0.1,
+    rootMargin: '50px',
+    triggerOnce: true
+  });
+
+  return (
+    <div
+      ref={elementRef}
+      className={`transform transition-all duration-700 ease-out ${
+        isVisible 
+          ? 'opacity-100 translate-x-0' 
+          : 'opacity-0 translate-x-[-50px]'
+      }`}
+      style={{ transitionDelay: `${index * 100}ms` }}
+    >
+      {children}
     </div>
   );
 }

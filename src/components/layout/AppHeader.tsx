@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Baby, Bell, Settings, Home, Users, Timer, Leaf, Newspaper } from 'lucide-react';
+import { Baby, Settings, Home, Users, Timer, Leaf, Newspaper } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,12 +13,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePathname, useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase/clientApp';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { cn } from '@/lib/utils';
-
+import { NotificationDropdown } from './NotificationDropdown';
 
 const navLinks = [
   { href: '/home', label: 'Home', icon: Home },
@@ -49,8 +48,11 @@ export function AppHeader() {
   };
 
   const getInitials = (name: string | null | undefined) => {
-    if (!name) return 'U';
-    return name.split(' ').map(n => n[0]).join('');
+    if (!name || name.trim() === '') return 'U';
+    const nameParts = name.trim().split(' ').filter(part => part.length > 0);
+    if (nameParts.length === 0) return 'U';
+    if (nameParts.length === 1) return nameParts[0].charAt(0).toUpperCase();
+    return nameParts.slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('');
   }
 
   return (
@@ -81,20 +83,14 @@ export function AppHeader() {
         </div>
         
         <div className="flex items-center gap-2">
-            {user && (
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary hover:bg-accent">
-                <Bell className="h-5 w-5" />
-                <span className="sr-only">Notifications</span>
-            </Button>
-            )}
+            {user && <NotificationDropdown />}
         {user ? (
             <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                <Avatar className="h-10 w-10">
-                    <AvatarImage src={user.photoURL || `https://placehold.co/100x100.png`} alt={user.displayName || 'User'} data-ai-hint="woman smiling" />
-                    <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                </Avatar>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary aspect-square">
+                    {getInitials(user.displayName)}
+                </div>
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>

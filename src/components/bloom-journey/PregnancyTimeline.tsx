@@ -10,14 +10,36 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { auth, firestore } from '@/lib/firebase/clientApp';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { differenceInDays } from 'date-fns';
 
 const findWeekData = (week: number): PregnancyWeek | undefined => {
   return pregnancyData.find(w => w.week === week);
 };
 
+const calculatePregnancyProgress = (dueDate: Date | undefined): { weeks: number; days: number } | null => {
+  if (!dueDate) return null;
+  
+  const today = new Date();
+  const totalPregnancyDays = 280; // 40 weeks * 7 days
+  const daysPassed = totalPregnancyDays - differenceInDays(dueDate, today);
+  
+  // Deduct 5 days to account for due date variance
+  const adjustedDaysPassed = daysPassed - 5;
+  
+  if (adjustedDaysPassed <= 0) {
+    return { weeks: 0, days: 0 };
+  }
+  
+  const weeks = Math.floor(adjustedDaysPassed / 7);
+  const days = adjustedDaysPassed % 7;
+  
+  return { weeks: Math.max(0, Math.min(weeks, 40)), days };
+};
+
 export function PregnancyTimeline() {
   const [timelineWeek, setTimelineWeek] = useState(12);
   const [isLoading, setIsLoading] = useState(true);
+  const [dueDate, setDueDate] = useState<Date | undefined>();
 
   useEffect(() => {
     let unsubscribeSnapshot: () => void = () => {};
@@ -27,13 +49,28 @@ export function PregnancyTimeline() {
         unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
           if (doc.exists()) {
             const data = doc.data();
-            setTimelineWeek(data.timelineWeek || data.currentWeek || 12);
+            // Get the due date
+            if (data.dueDate) {
+              const savedDueDate = data.dueDate.toDate();
+              setDueDate(savedDueDate);
+              
+              // Calculate current week based on due date
+              const pregnancyProgress = calculatePregnancyProgress(savedDueDate);
+              if (pregnancyProgress) {
+                setTimelineWeek(pregnancyProgress.weeks);
+              } else {
+                setTimelineWeek(data.timelineWeek || data.currentWeek || 12);
+              }
+            } else {
+              setTimelineWeek(data.timelineWeek || data.currentWeek || 12);
+            }
           }
           setIsLoading(false);
         });
       } else {
         setIsLoading(false);
         setTimelineWeek(12);
+        setDueDate(undefined);
         if (unsubscribeSnapshot) unsubscribeSnapshot();
       }
     });
@@ -58,6 +95,7 @@ export function PregnancyTimeline() {
   };
 
   const weekData = findWeekData(timelineWeek);
+  const pregnancyProgress = calculatePregnancyProgress(dueDate);
 
   if (isLoading) {
     return (
@@ -71,7 +109,12 @@ export function PregnancyTimeline() {
      return (
         <Card className="w-full hover:shadow-lg transition-shadow duration-300">
             <CardHeader>
-                <CardTitle className="font-headline text-3xl">Week {timelineWeek}</CardTitle>
+                <CardTitle className="font-headline text-3xl">
+                  {pregnancyProgress ? 
+                    `${pregnancyProgress.weeks} weeks ${pregnancyProgress.days} days` : 
+                    `Week ${timelineWeek}`
+                  }
+                </CardTitle>
             </CardHeader>
             <CardContent>
                 <p>No data available for this week.</p>
@@ -83,7 +126,12 @@ export function PregnancyTimeline() {
   return (
     <Card className="w-full hover:shadow-lg transition-shadow duration-300">
       <CardHeader>
-        <CardTitle className="font-headline text-3xl">Week {timelineWeek}</CardTitle>
+        <CardTitle className="font-headline text-3xl">
+          {pregnancyProgress ? 
+            `${pregnancyProgress.weeks} weeks ${pregnancyProgress.days} days` : 
+            `Week ${timelineWeek}`
+          }
+        </CardTitle>
         <CardDescription>{weekData.babySize}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -97,7 +145,12 @@ export function PregnancyTimeline() {
               onValueCommit={handleSliderCommit}
             />
             <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                <span>Week 1</span>
+                <span>
+                  {pregnancyProgress ? 
+                    `${pregnancyProgress.weeks} weeks ${pregnancyProgress.days} days` : 
+                    `Week ${timelineWeek}`
+                  }
+                </span>
                 <span>Week 40</span>
             </div>
         </div>
