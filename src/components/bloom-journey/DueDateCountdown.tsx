@@ -58,71 +58,94 @@ export function DueDateCountdown() {
 
   useEffect(() => {
     setIsClient(true);
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        try {
-          const userDocRef = doc(firestore, "users", user.uid);
-          
-          // Use real-time listener to get updates when due date changes (like AI Pregnancy Pal)
-          const unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
-            if (doc.exists() && doc.data().dueDate) {
-              try {
-                const savedDueDate = doc.data().dueDate.toDate();
-                console.log('DueDateCountdown - Found saved due date:', savedDueDate);
-                setDueDate(savedDueDate);
-                setIsDueDateSaved(true);
-              } catch (timestampError) {
-                console.error('DueDateCountdown - Error converting timestamp:', timestampError);
-                // If timestamp conversion fails, treat as no saved date
+    let unsubscribeAuth: (() => void) | undefined;
+    let unsubscribeSnapshot: (() => void) | undefined;
+
+    const fetchUserData = async () => {
+      try {
+        unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
+          if (user) {
+            try {
+              const userDocRef = doc(firestore, "users", user.uid);
+              
+              // Use real-time listener to get updates when due date changes
+              unsubscribeSnapshot = onSnapshot(userDocRef, (doc) => {
+                if (doc.exists() && doc.data().dueDate) {
+                  try {
+                    const savedDueDate = doc.data().dueDate.toDate();
+                    setDueDate(savedDueDate);
+                    setIsDueDateSaved(true);
+                  } catch (timestampError) {
+                    console.error('DueDateCountdown - Error converting timestamp:', timestampError);
+                    // If timestamp conversion fails, treat as no saved date
+                    const defaultDueDate = new Date();
+                    defaultDueDate.setDate(defaultDueDate.getDate() + 180);
+                    setDueDate(defaultDueDate);
+                    setIsDueDateSaved(false);
+                  }
+                } else {
+                  // If no due date is saved, set a default but DON'T save it automatically
+                  // Let the user set their own due date
+                  const defaultDueDate = new Date();
+                  defaultDueDate.setDate(defaultDueDate.getDate() + 180);
+                  setDueDate(defaultDueDate);
+                  setIsDueDateSaved(false);
+                  // Don't save the default - let user choose their own due date
+                }
+                setHasLoadedDueDate(true);
+                setIsLoading(false);
+              }, (error) => {
+                // Handle permission errors gracefully
+                if (error.code === 'permission-denied') {
+                  console.log('Permission denied for user data, using default due date');
+                } else {
+                  console.error("Error listening to user data:", error);
+                }
+                // Set a temporary default due date for display purposes only
                 const defaultDueDate = new Date();
                 defaultDueDate.setDate(defaultDueDate.getDate() + 180);
                 setDueDate(defaultDueDate);
-                setIsDueDateSaved(false);
-              }
-            } else {
-              // If no due date is saved, set a default but DON'T save it automatically
-              // Let the user set their own due date
+                setHasLoadedDueDate(true);
+                setIsLoading(false);
+                // Don't save on error - let user set their own due date
+              });
+
+            } catch (error) {
+              console.error("Error setting up user data listener:", error);
+              // Set a temporary default due date for display purposes only
               const defaultDueDate = new Date();
               defaultDueDate.setDate(defaultDueDate.getDate() + 180);
               setDueDate(defaultDueDate);
-              setIsDueDateSaved(false);
-              // Don't save the default - let user choose their own due date
+              setHasLoadedDueDate(true);
+              setIsLoading(false);
+              // Don't save on error - let user set their own due date
             }
-            setHasLoadedDueDate(true);
-            setIsLoading(false);
-          }, (error) => {
-            console.error("Error listening to user data:", error);
-            // Set a temporary default due date for display purposes only
+          } else {
+            // For non-authenticated users, set a temporary default due date
             const defaultDueDate = new Date();
             defaultDueDate.setDate(defaultDueDate.getDate() + 180);
             setDueDate(defaultDueDate);
             setHasLoadedDueDate(true);
             setIsLoading(false);
-            // Don't save on error - let user set their own due date
-          });
-
-          return () => unsubscribeSnapshot();
-        } catch (error) {
-          console.error("Error setting up user data listener:", error);
-          // Set a temporary default due date for display purposes only
-          const defaultDueDate = new Date();
-          defaultDueDate.setDate(defaultDueDate.getDate() + 180);
-          setDueDate(defaultDueDate);
-          setHasLoadedDueDate(true);
-          setIsLoading(false);
-          // Don't save on error - let user set their own due date
-        }
-      } else {
-        // For non-authenticated users, set a temporary default due date
+          }
+        });
+      } catch (error) {
+        console.error("Error in fetchUserData:", error);
         const defaultDueDate = new Date();
         defaultDueDate.setDate(defaultDueDate.getDate() + 180);
         setDueDate(defaultDueDate);
         setHasLoadedDueDate(true);
         setIsLoading(false);
       }
-    });
+    };
 
-    return () => unsubscribe();
+    fetchUserData();
+
+    // Cleanup function
+    return () => {
+      if (unsubscribeAuth) unsubscribeAuth();
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+    };
   }, []);
 
   useEffect(() => {

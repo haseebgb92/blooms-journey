@@ -1,0 +1,1134 @@
+{
+  "countries": {
+    "pakistan": {
+      "name": "Pakistan",
+      "flag": "🇵🇰",
+      "meals": {
+        "breakfast": [
+          {
+            "title": "Halwa Puri with Chana",
+            "description": "Traditional Pakistani breakfast rich in carbohydrates and protein",
+            "ingredients": [
+              "1 cup semolina (sooji)",
+              "1/2 cup ghee",
+              "1/2 cup sugar",
+              "1/4 cup nuts (almonds, pistachios)",
+              "Cardamom powder",
+              "Puri (whole wheat bread)",
+              "Chickpeas curry"
+            ],
+            "instructions": [
+              "Roast semolina in ghee until golden brown",
+              "Add sugar and water, cook until thickened",
+              "Garnish with nuts and cardamom",
+              "Serve with puri and chickpeas curry"
+            ],
+            "nutrition": ["carbohydrates", "protein", "healthy fats", "iron"],
+            "pregnancy_benefits": "Provides energy for morning activities and iron for blood production"
+          },
+          {
+            "title": "Oatmeal with Dates and Nuts",
+            "description": "Nutritious breakfast with natural sweetness",
+            "ingredients": [
+              "1 cup rolled oats",
+              "1 cup milk",
+              "4-5 dates, chopped",
+              "2 tbsp mixed nuts",
+              "1 tbsp honey",
+              "Cinnamon powder"
+            ],
+            "instructions": [
+              "Cook oats with milk until creamy",
+              "Add chopped dates and nuts",
+              "Drizzle with honey and sprinkle cinnamon"
+            ],
+            "nutrition": ["fiber", "iron", "calcium", "natural sugars"],
+            "pregnancy_benefits": "High in fiber for digestion and iron for blood production"
+          },
+          {
+            "title": "Egg Paratha",
+            "description": "Protein-rich breakfast with whole wheat",
+            "ingredients": [
+              "2 whole wheat parathas",
+              "2 eggs",
+              "1 onion, finely chopped",
+              "1 tomato, finely chopped",
+              "Salt and pepper",
+              "Ghee for cooking"
+            ],
+            "instructions": [
+              "Beat eggs with chopped vegetables",
+              "Cook parathas on both sides",
+              "Add egg mixture and fold",
+              "Cook until eggs are set"
+            ],
+            "nutrition": ["protein", "fiber", "vitamins", "minerals"],
+            "pregnancy_benefits": "Excellent source of protein for baby's development"
+          }
+        ],
+        "lunch": [
+          {
+            "title": "Daal Chawal with Vegetables",
+            "description": "Complete meal with lentils, rice, and vegetables",
+            "ingredients": [
+              "1 cup yellow lentils",
+              "1 cup basmati rice",
+              "Mixed vegetables (carrots, peas, beans)",
+              "1 onion, diced",
+              "2 tomatoes, chopped",
+              "Spices (turmeric, cumin, coriander)",
+              "Ghee"
+            ],
+            "instructions": [
+              "Cook lentils with spices until soft",
+              "Prepare rice separately",
+              "Cook vegetables with onions and tomatoes",
+              "Serve together with ghee"
+            ],
+            "nutrition": ["protein", "fiber", "iron", "folate", "vitamins"],
+            "pregnancy_benefits": "Complete protein source with essential nutrients for pregnancy"
+          },
+          {
+            "title": "Chicken Biryani",
+            "description": "Aromatic rice dish with tender chicken",
+            "ingredients": [
+              "1 cup basmati rice",
+              "300g chicken breast",
+              "1 onion, sliced",
+              "2 tomatoes, chopped",
+              "Biryani spices",
+              "Yogurt",
+              "Ghee"
+            ],
+            "instructions": [
+              "Marinate chicken with spices and yogurt",
+              "Cook rice until 70% done",
+              "Layer rice and chicken",
+              "Cook on low heat until done"
+            ],
+            "nutrition": ["protein", "carbohydrates", "vitamins", "minerals"],
+            "pregnancy_benefits": "High-quality protein for muscle development"
+          },
+          {
+            "title": "Fish Curry with Rice",
+            "description": "Omega-3 rich fish curry",
+            "ingredients": [
+              "300g fish fillets",
+              "1 onion, chopped",
+              "2 tomatoes, pureed",
+              "Ginger-garlic paste",
+              "Spices (turmeric, red chili, coriander)",
+              "Coconut milk",
+              "Rice"
+            ],
+            "instructions": [
+              "Sauté onions and ginger-garlic paste",
+              "Add tomato puree and spices",
+              "Add fish and coconut milk",
+              "Simmer until fish is cooked"
+            ],
+            "nutrition": ["omega-3", "protein", "vitamins", "minerals"],
+            "pregnancy_benefits": "Essential omega-3 for baby's brain development"
+          }
+        ],
+        "dinner": [
+          {
+            "title": "Lentil Soup with Roti",
+            "description": "Light and nutritious dinner",
+            "ingredients": [
+              "1 cup red lentils",
+              "1 onion, chopped",
+              "2 tomatoes, chopped",
+              "Ginger and garlic",
+              "Spices (cumin, turmeric)",
+              "Whole wheat roti"
+            ],
+            "instructions": [
+              "Cook lentils with vegetables",
+              "Add spices and simmer",
+              "Serve with fresh roti"
+            ],
+            "nutrition": ["protein", "fiber", "iron", "folate"],
+            "pregnancy_benefits": "Easy to digest, rich in essential nutrients"
+          },
+          {
+            "title": "Vegetable Pulao",
+            "description": "Aromatic rice with mixed vegetables",
+            "ingredients": [
+              "1 cup basmati rice",
+              "Mixed vegetables (carrots, peas, beans)",
+              "1 onion, sliced",
+              "Whole spices (cardamom, cinnamon, bay leaves)",
+              "Ghee"
+            ],
+            "instructions": [
+              "Sauté onions and whole spices",
+              "Add vegetables and rice",
+              "Cook with water until done"
+            ],
+            "nutrition": ["carbohydrates", "fiber", "vitamins", "minerals"],
+            "pregnancy_benefits": "Provides energy and essential vitamins"
+          }
+        ],
+        "snacks": [
+          {
+            "title": "Fruit Chaat",
+            "description": "Fresh fruits with chaat masala",
+            "ingredients": [
+              "Mixed fruits (apple, banana, orange)",
+              "Chaat masala",
+              "Lemon juice",
+              "Black salt"
+            ],
+            "instructions": [
+              "Cut fruits into pieces",
+              "Sprinkle chaat masala and black salt",
+              "Add lemon juice and serve"
+            ],
+            "nutrition": ["vitamins", "fiber", "antioxidants"],
+            "pregnancy_benefits": "Rich in vitamins and antioxidants for immunity"
+          },
+          {
+            "title": "Roasted Chickpeas",
+            "description": "Crunchy and nutritious snack",
+            "ingredients": [
+              "1 cup chickpeas",
+              "Olive oil",
+              "Spices (cumin, red chili, salt)"
+            ],
+            "instructions": [
+              "Drain and dry chickpeas",
+              "Toss with oil and spices",
+              "Roast until crispy"
+            ],
+            "nutrition": ["protein", "fiber", "iron"],
+            "pregnancy_benefits": "High in protein and iron for blood production"
+          }
+        ]
+      }
+    },
+    "india": {
+      "name": "India",
+      "flag": "🇮🇳",
+      "meals": {
+        "breakfast": [
+          {
+            "title": "Idli with Sambar",
+            "description": "Fermented rice and lentil cakes with vegetable soup",
+            "ingredients": [
+              "Idli batter (rice and urad dal)",
+              "Sambar (lentil soup with vegetables)",
+              "Coconut chutney",
+              "Mixed vegetables"
+            ],
+            "instructions": [
+              "Steam idli batter in idli maker",
+              "Prepare sambar with vegetables",
+              "Make coconut chutney",
+              "Serve together"
+            ],
+            "nutrition": ["protein", "fiber", "probiotics", "vitamins"],
+            "pregnancy_benefits": "Fermented food for gut health, easy to digest"
+          },
+          {
+            "title": "Poha with Peanuts",
+            "description": "Flattened rice with vegetables and nuts",
+            "ingredients": [
+              "1 cup poha (flattened rice)",
+              "1 onion, chopped",
+              "1 potato, diced",
+              "2 tbsp peanuts",
+              "Curry leaves",
+              "Turmeric and salt"
+            ],
+            "instructions": [
+              "Rinse poha and drain",
+              "Sauté onions and potatoes",
+              "Add poha and spices",
+              "Garnish with peanuts"
+            ],
+            "nutrition": ["carbohydrates", "protein", "fiber", "vitamins"],
+            "pregnancy_benefits": "Light breakfast rich in nutrients"
+          }
+        ],
+        "lunch": [
+          {
+            "title": "Rajma Chawal",
+            "description": "Kidney beans curry with rice",
+            "ingredients": [
+              "1 cup kidney beans",
+              "1 cup rice",
+              "1 onion, chopped",
+              "2 tomatoes, chopped",
+              "Spices (garam masala, turmeric)",
+              "Ginger-garlic paste"
+            ],
+            "instructions": [
+              "Soak and cook kidney beans",
+              "Prepare curry with spices",
+              "Serve with steamed rice"
+            ],
+            "nutrition": ["protein", "fiber", "iron", "folate"],
+            "pregnancy_benefits": "Excellent source of plant-based protein and iron"
+          },
+          {
+            "title": "Palak Paneer",
+            "description": "Spinach curry with cottage cheese",
+            "ingredients": [
+              "2 cups spinach, pureed",
+              "200g paneer (cottage cheese)",
+              "1 onion, chopped",
+              "Spices (cumin, garam masala)",
+              "Ginger-garlic paste"
+            ],
+            "instructions": [
+              "Blanch and puree spinach",
+              "Sauté onions and spices",
+              "Add spinach puree and paneer",
+              "Simmer until done"
+            ],
+            "nutrition": ["iron", "calcium", "protein", "vitamins"],
+            "pregnancy_benefits": "Rich in iron for blood production and calcium for bones"
+          }
+        ],
+        "dinner": [
+          {
+            "title": "Khichdi",
+            "description": "Rice and lentil porridge",
+            "ingredients": [
+              "1/2 cup rice",
+              "1/2 cup yellow lentils",
+              "1 onion, chopped",
+              "Ginger and garlic",
+              "Spices (cumin, turmeric)",
+              "Ghee"
+            ],
+            "instructions": [
+              "Wash rice and lentils",
+              "Sauté onions and spices",
+              "Add rice, lentils, and water",
+              "Cook until soft and mushy"
+            ],
+            "nutrition": ["protein", "carbohydrates", "fiber", "easy digestible"],
+            "pregnancy_benefits": "Easy to digest, perfect for dinner"
+          }
+        ],
+        "snacks": [
+          {
+            "title": "Mixed Nuts and Dry Fruits",
+            "description": "Nutritious trail mix",
+            "ingredients": [
+              "Almonds, walnuts, pistachios",
+              "Raisins, dates, apricots",
+              "Pumpkin seeds"
+            ],
+            "instructions": [
+              "Mix all nuts and dry fruits",
+              "Store in airtight container",
+              "Have a handful as snack"
+            ],
+            "nutrition": ["healthy fats", "protein", "vitamins", "minerals"],
+            "pregnancy_benefits": "Rich in essential nutrients and healthy fats"
+          }
+        ]
+      }
+    },
+    "usa": {
+      "name": "United States",
+      "flag": "🇺🇸",
+      "meals": {
+        "breakfast": [
+          {
+            "title": "Avocado Toast with Eggs",
+            "description": "Healthy fats and protein breakfast",
+            "ingredients": [
+              "2 slices whole grain bread",
+              "1 avocado",
+              "2 eggs",
+              "Salt and pepper",
+              "Red pepper flakes"
+            ],
+            "instructions": [
+              "Toast bread",
+              "Mash avocado on toast",
+              "Cook eggs (poached or fried)",
+              "Top with eggs and seasonings"
+            ],
+            "nutrition": ["healthy fats", "protein", "fiber", "vitamins"],
+            "pregnancy_benefits": "Healthy fats from avocado, protein from eggs"
+          },
+          {
+            "title": "Greek Yogurt Parfait",
+            "description": "Protein-rich yogurt with fruits and nuts",
+            "ingredients": [
+              "1 cup Greek yogurt",
+              "1/4 cup granola",
+              "1/2 cup mixed berries",
+              "1 tbsp honey",
+              "2 tbsp almonds"
+            ],
+            "instructions": [
+              "Layer yogurt in a glass",
+              "Add granola layer",
+              "Top with berries",
+              "Drizzle with honey and almonds"
+            ],
+            "nutrition": ["protein", "calcium", "antioxidants", "fiber"],
+            "pregnancy_benefits": "High in calcium for bone development"
+          }
+        ],
+        "lunch": [
+          {
+            "title": "Grilled Salmon Salad",
+            "description": "Omega-3 rich salmon with fresh vegetables",
+            "ingredients": [
+              "1 salmon fillet",
+              "Mixed greens",
+              "Cherry tomatoes",
+              "Cucumber",
+              "Olive oil and lemon dressing"
+            ],
+            "instructions": [
+              "Grill salmon until cooked",
+              "Chop vegetables",
+              "Mix with dressing",
+              "Serve fresh and healthy"
+            ],
+            "nutrition": ["omega-3", "protein", "vitamins", "antioxidants"],
+            "pregnancy_benefits": "Essential omega-3 for brain development"
+          },
+          {
+            "title": "Quinoa Bowl",
+            "description": "Complete protein with vegetables",
+            "ingredients": [
+              "1 cup quinoa",
+              "Mixed vegetables",
+              "Chickpeas",
+              "Olive oil",
+              "Lemon juice",
+              "Herbs and spices"
+            ],
+            "instructions": [
+              "Cook quinoa according to package",
+              "Roast vegetables",
+              "Mix with chickpeas",
+              "Dress with olive oil and lemon"
+            ],
+            "nutrition": ["complete protein", "fiber", "vitamins", "minerals"],
+            "pregnancy_benefits": "Complete protein source for baby's development"
+          }
+        ],
+        "dinner": [
+          {
+            "title": "Lean Chicken Breast with Vegetables",
+            "description": "High-quality protein with steamed vegetables",
+            "ingredients": [
+              "1 chicken breast",
+              "Broccoli",
+              "Carrots",
+              "Olive oil",
+              "Herbs and spices"
+            ],
+            "instructions": [
+              "Season chicken breast",
+              "Grill or bake chicken",
+              "Steam vegetables",
+              "Serve together"
+            ],
+            "nutrition": ["protein", "vitamins", "minerals", "fiber"],
+            "pregnancy_benefits": "Lean protein for muscle development"
+          }
+        ],
+        "snacks": [
+          {
+            "title": "Apple with Peanut Butter",
+            "description": "Fiber and protein snack",
+            "ingredients": [
+              "1 apple, sliced",
+              "2 tbsp natural peanut butter"
+            ],
+            "instructions": [
+              "Slice apple",
+              "Serve with peanut butter"
+            ],
+            "nutrition": ["fiber", "protein", "vitamins", "healthy fats"],
+            "pregnancy_benefits": "Fiber for digestion, protein for growth"
+          }
+        ]
+      }
+    },
+    "uk": {
+      "name": "United Kingdom",
+      "flag": "🇬🇧",
+      "meals": {
+        "breakfast": [
+          {
+            "title": "Porridge with Berries",
+            "description": "Traditional British breakfast",
+            "ingredients": [
+              "1 cup rolled oats",
+              "1 cup milk",
+              "1/2 cup mixed berries",
+              "1 tbsp honey",
+              "1 tbsp chia seeds"
+            ],
+            "instructions": [
+              "Cook oats with milk",
+              "Top with berries and honey",
+              "Sprinkle chia seeds"
+            ],
+            "nutrition": ["fiber", "protein", "antioxidants", "omega-3"],
+            "pregnancy_benefits": "Slow-release energy, rich in fiber"
+          }
+        ],
+        "lunch": [
+          {
+            "title": "Tuna Salad Sandwich",
+            "description": "Classic British lunch",
+            "ingredients": [
+              "1 can tuna (in water)",
+              "1 avocado, mashed",
+              "1/4 cup red onion, diced",
+              "1 tbsp lemon juice",
+              "Whole grain bread"
+            ],
+            "instructions": [
+              "Mix tuna with mashed avocado",
+              "Add diced onion and lemon juice",
+              "Serve on whole grain bread"
+            ],
+            "nutrition": ["protein", "omega-3", "healthy fats", "fiber"],
+            "pregnancy_benefits": "Protein and omega-3 for development"
+          }
+        ],
+        "dinner": [
+          {
+            "title": "Baked Cod with Vegetables",
+            "description": "Light and nutritious dinner",
+            "ingredients": [
+              "1 cod fillet",
+              "Mixed vegetables",
+              "Lemon",
+              "Herbs and spices",
+              "Olive oil"
+            ],
+            "instructions": [
+              "Season cod with herbs",
+              "Bake with vegetables",
+              "Serve with lemon"
+            ],
+            "nutrition": ["protein", "omega-3", "vitamins", "minerals"],
+            "pregnancy_benefits": "Lean protein and omega-3"
+          }
+        ],
+        "snacks": [
+          {
+            "title": "Scones with Clotted Cream",
+            "description": "Traditional British tea snack",
+            "ingredients": [
+              "Homemade scones",
+              "Clotted cream",
+              "Strawberry jam"
+            ],
+            "instructions": [
+              "Serve warm scones",
+              "Top with clotted cream and jam"
+            ],
+            "nutrition": ["carbohydrates", "calcium", "vitamins"],
+            "pregnancy_benefits": "Calcium for bone development"
+          }
+        ]
+      }
+    },
+    "china": {
+      "name": "China",
+      "flag": "🇨🇳",
+      "meals": {
+        "breakfast": [
+          {
+            "title": "Congee with Eggs",
+            "description": "Rice porridge with protein",
+            "ingredients": [
+              "1 cup rice",
+              "4 cups water",
+              "2 eggs",
+              "Ginger",
+              "Green onions",
+              "Soy sauce"
+            ],
+            "instructions": [
+              "Cook rice in water until mushy",
+              "Add beaten eggs",
+              "Garnish with ginger and green onions"
+            ],
+            "nutrition": ["carbohydrates", "protein", "easy digestible"],
+            "pregnancy_benefits": "Easy to digest, gentle on stomach"
+          }
+        ],
+        "lunch": [
+          {
+            "title": "Steamed Fish with Vegetables",
+            "description": "Light and healthy lunch",
+            "ingredients": [
+              "1 fish fillet",
+              "Bok choy",
+              "Ginger",
+              "Soy sauce",
+              "Sesame oil"
+            ],
+            "instructions": [
+              "Steam fish with ginger",
+              "Steam bok choy",
+              "Dress with soy sauce and sesame oil"
+            ],
+            "nutrition": ["protein", "omega-3", "vitamins", "minerals"],
+            "pregnancy_benefits": "Lean protein and essential nutrients"
+          }
+        ],
+        "dinner": [
+          {
+            "title": "Stir-fried Vegetables with Tofu",
+            "description": "Vegetarian protein option",
+            "ingredients": [
+              "200g tofu",
+              "Mixed vegetables",
+              "Ginger and garlic",
+              "Soy sauce",
+              "Sesame oil"
+            ],
+            "instructions": [
+              "Stir-fry tofu until golden",
+              "Add vegetables",
+              "Season with soy sauce"
+            ],
+            "nutrition": ["protein", "fiber", "vitamins", "minerals"],
+            "pregnancy_benefits": "Plant-based protein and fiber"
+          }
+        ],
+        "snacks": [
+          {
+            "title": "Steamed Dumplings",
+            "description": "Light and nutritious snack",
+            "ingredients": [
+              "Dumpling wrappers",
+              "Minced vegetables",
+              "Ginger",
+              "Soy sauce"
+            ],
+            "instructions": [
+              "Fill wrappers with vegetables",
+              "Steam until cooked",
+              "Serve with soy sauce"
+            ],
+            "nutrition": ["carbohydrates", "fiber", "vitamins"],
+            "pregnancy_benefits": "Light snack rich in nutrients"
+          }
+        ]
+      }
+    },
+    "japan": {
+      "name": "Japan",
+      "flag": "🇯🇵",
+      "meals": {
+        "breakfast": [
+          {
+            "title": "Miso Soup with Rice",
+            "description": "Traditional Japanese breakfast",
+            "ingredients": [
+              "Miso paste",
+              "Tofu",
+              "Seaweed",
+              "Green onions",
+              "Steamed rice"
+            ],
+            "instructions": [
+              "Prepare miso soup with tofu",
+              "Serve with steamed rice",
+              "Garnish with green onions"
+            ],
+            "nutrition": ["protein", "probiotics", "vitamins", "minerals"],
+            "pregnancy_benefits": "Probiotics for gut health"
+          }
+        ],
+        "lunch": [
+          {
+            "title": "Sushi Bowl",
+            "description": "Nutritious rice bowl",
+            "ingredients": [
+              "Steamed rice",
+              "Avocado",
+              "Cucumber",
+              "Carrots",
+              "Nori sheets",
+              "Soy sauce"
+            ],
+            "instructions": [
+              "Layer rice in bowl",
+              "Add vegetables",
+              "Top with nori",
+              "Serve with soy sauce"
+            ],
+            "nutrition": ["carbohydrates", "fiber", "vitamins", "minerals"],
+            "pregnancy_benefits": "Nutritious and easy to digest"
+          }
+        ],
+        "dinner": [
+          {
+            "title": "Teriyaki Chicken with Vegetables",
+            "description": "Sweet and savory dinner",
+            "ingredients": [
+              "Chicken breast",
+              "Teriyaki sauce",
+              "Broccoli",
+              "Carrots",
+              "Steamed rice"
+            ],
+            "instructions": [
+              "Marinate chicken in teriyaki sauce",
+              "Grill chicken",
+              "Serve with steamed vegetables and rice"
+            ],
+            "nutrition": ["protein", "vitamins", "minerals", "carbohydrates"],
+            "pregnancy_benefits": "High-quality protein for development"
+          }
+        ],
+        "snacks": [
+          {
+            "title": "Edamame",
+            "description": "Protein-rich soybeans",
+            "ingredients": [
+              "Fresh edamame",
+              "Sea salt"
+            ],
+            "instructions": [
+              "Steam edamame",
+              "Sprinkle with sea salt"
+            ],
+            "nutrition": ["protein", "fiber", "vitamins", "minerals"],
+            "pregnancy_benefits": "Excellent source of plant protein"
+          }
+        ]
+      }
+    },
+    "italy": {
+      "name": "Italy",
+      "flag": "🇮🇹",
+      "meals": {
+        "breakfast": [
+          {
+            "title": "Yogurt with Honey and Nuts",
+            "description": "Light Italian breakfast",
+            "ingredients": [
+              "Greek yogurt",
+              "Honey",
+              "Mixed nuts",
+              "Fresh berries"
+            ],
+            "instructions": [
+              "Layer yogurt in glass",
+              "Drizzle with honey",
+              "Top with nuts and berries"
+            ],
+            "nutrition": ["protein", "calcium", "healthy fats", "vitamins"],
+            "pregnancy_benefits": "Calcium for bone development"
+          }
+        ],
+        "lunch": [
+          {
+            "title": "Pasta Primavera",
+            "description": "Fresh vegetable pasta",
+            "ingredients": [
+              "Whole wheat pasta",
+              "Mixed vegetables",
+              "Olive oil",
+              "Garlic",
+              "Parmesan cheese"
+            ],
+            "instructions": [
+              "Cook pasta",
+              "Sauté vegetables",
+              "Combine with olive oil and cheese"
+            ],
+            "nutrition": ["carbohydrates", "fiber", "vitamins", "protein"],
+            "pregnancy_benefits": "Complex carbohydrates for energy"
+          }
+        ],
+        "dinner": [
+          {
+            "title": "Grilled Fish with Vegetables",
+            "description": "Mediterranean style dinner",
+            "ingredients": [
+              "Fish fillet",
+              "Zucchini",
+              "Bell peppers",
+              "Olive oil",
+              "Herbs"
+            ],
+            "instructions": [
+              "Grill fish with herbs",
+              "Roast vegetables",
+              "Serve with olive oil"
+            ],
+            "nutrition": ["protein", "omega-3", "vitamins", "antioxidants"],
+            "pregnancy_benefits": "Lean protein and healthy fats"
+          }
+        ],
+        "snacks": [
+          {
+            "title": "Caprese Salad",
+            "description": "Fresh tomato and mozzarella",
+            "ingredients": [
+              "Fresh tomatoes",
+              "Mozzarella cheese",
+              "Basil leaves",
+              "Balsamic vinegar",
+              "Olive oil"
+            ],
+            "instructions": [
+              "Slice tomatoes and mozzarella",
+              "Layer with basil",
+              "Dress with vinegar and oil"
+            ],
+            "nutrition": ["protein", "vitamins", "antioxidants", "calcium"],
+            "pregnancy_benefits": "Calcium and antioxidants"
+          }
+        ]
+      }
+    },
+    "mexico": {
+      "name": "Mexico",
+      "flag": "🇲🇽",
+      "meals": {
+        "breakfast": [
+          {
+            "title": "Huevos Rancheros",
+            "description": "Eggs with tomato sauce",
+            "ingredients": [
+              "2 eggs",
+              "Corn tortillas",
+              "Tomato sauce",
+              "Beans",
+              "Avocado"
+            ],
+            "instructions": [
+              "Fry eggs",
+              "Warm tortillas",
+              "Top with tomato sauce and beans",
+              "Serve with avocado"
+            ],
+            "nutrition": ["protein", "fiber", "healthy fats", "vitamins"],
+            "pregnancy_benefits": "Protein and healthy fats for development"
+          }
+        ],
+        "lunch": [
+          {
+            "title": "Chicken Fajitas",
+            "description": "Grilled chicken with vegetables",
+            "ingredients": [
+              "Chicken breast",
+              "Bell peppers",
+              "Onions",
+              "Corn tortillas",
+              "Salsa"
+            ],
+            "instructions": [
+              "Grill chicken and vegetables",
+              "Serve with warm tortillas",
+              "Top with salsa"
+            ],
+            "nutrition": ["protein", "vitamins", "fiber", "carbohydrates"],
+            "pregnancy_benefits": "Lean protein with vegetables"
+          }
+        ],
+        "dinner": [
+          {
+            "title": "Fish Tacos",
+            "description": "Light and healthy dinner",
+            "ingredients": [
+              "Fish fillets",
+              "Corn tortillas",
+              "Cabbage slaw",
+              "Lime",
+              "Salsa"
+            ],
+            "instructions": [
+              "Grill fish",
+              "Serve in tortillas",
+              "Top with slaw and salsa"
+            ],
+            "nutrition": ["protein", "omega-3", "fiber", "vitamins"],
+            "pregnancy_benefits": "Omega-3 for brain development"
+          }
+        ],
+        "snacks": [
+          {
+            "title": "Guacamole with Vegetables",
+            "description": "Healthy dip with vegetables",
+            "ingredients": [
+              "Avocado",
+              "Tomatoes",
+              "Onion",
+              "Lime juice",
+              "Carrot and cucumber sticks"
+            ],
+            "instructions": [
+              "Mash avocado",
+              "Mix with vegetables",
+              "Serve with fresh vegetables"
+            ],
+            "nutrition": ["healthy fats", "fiber", "vitamins", "antioxidants"],
+            "pregnancy_benefits": "Healthy fats and fiber"
+          }
+        ]
+      }
+    },
+    "france": {
+      "name": "France",
+      "flag": "🇫🇷",
+      "meals": {
+        "breakfast": [
+          {
+            "title": "Croissant with Butter and Jam",
+            "description": "Classic French breakfast",
+            "ingredients": [
+              "Fresh croissant",
+              "Butter",
+              "Strawberry jam",
+              "Coffee or tea"
+            ],
+            "instructions": [
+              "Warm croissant",
+              "Spread with butter and jam",
+              "Serve with hot beverage"
+            ],
+            "nutrition": ["carbohydrates", "calcium", "vitamins"],
+            "pregnancy_benefits": "Calcium for bone development"
+          }
+        ],
+        "lunch": [
+          {
+            "title": "Salmon Quiche",
+            "description": "Rich and nutritious lunch",
+            "ingredients": [
+              "Pie crust",
+              "Salmon fillet",
+              "Eggs",
+              "Cream",
+              "Spinach"
+            ],
+            "instructions": [
+              "Prepare pie crust",
+              "Layer salmon and spinach",
+              "Pour egg mixture",
+              "Bake until set"
+            ],
+            "nutrition": ["protein", "omega-3", "calcium", "vitamins"],
+            "pregnancy_benefits": "Omega-3 and calcium for development"
+          }
+        ],
+        "dinner": [
+          {
+            "title": "Coq au Vin",
+            "description": "Classic French chicken dish",
+            "ingredients": [
+              "Chicken pieces",
+              "Red wine",
+              "Mushrooms",
+              "Pearl onions",
+              "Herbs"
+            ],
+            "instructions": [
+              "Brown chicken",
+              "Add wine and vegetables",
+              "Simmer until tender"
+            ],
+            "nutrition": ["protein", "antioxidants", "vitamins", "minerals"],
+            "pregnancy_benefits": "High-quality protein and antioxidants"
+          }
+        ],
+        "snacks": [
+          {
+            "title": "Cheese and Fruit Plate",
+            "description": "Elegant French snack",
+            "ingredients": [
+              "Assorted cheeses",
+              "Fresh fruits",
+              "Nuts",
+              "Honey"
+            ],
+            "instructions": [
+              "Arrange cheese and fruits",
+              "Serve with nuts and honey"
+            ],
+            "nutrition": ["protein", "calcium", "vitamins", "healthy fats"],
+            "pregnancy_benefits": "Calcium and protein for development"
+          }
+        ]
+      }
+    },
+    "germany": {
+      "name": "Germany",
+      "flag": "🇩🇪",
+      "meals": {
+        "breakfast": [
+          {
+            "title": "German Muesli",
+            "description": "Nutritious breakfast cereal",
+            "ingredients": [
+              "Rolled oats",
+              "Mixed nuts",
+              "Dried fruits",
+              "Milk",
+              "Honey"
+            ],
+            "instructions": [
+              "Mix oats, nuts, and fruits",
+              "Add milk and honey",
+              "Let sit for 5 minutes"
+            ],
+            "nutrition": ["fiber", "protein", "vitamins", "minerals"],
+            "pregnancy_benefits": "Fiber for digestion and energy"
+          }
+        ],
+        "lunch": [
+          {
+            "title": "Schnitzel with Potatoes",
+            "description": "Breaded meat with potatoes",
+            "ingredients": [
+              "Pork or chicken cutlet",
+              "Breadcrumbs",
+              "Eggs",
+              "Potatoes",
+              "Lemon"
+            ],
+            "instructions": [
+              "Bread and fry cutlet",
+              "Boil potatoes",
+              "Serve with lemon"
+            ],
+            "nutrition": ["protein", "carbohydrates", "vitamins", "minerals"],
+            "pregnancy_benefits": "Protein for muscle development"
+          }
+        ],
+        "dinner": [
+          {
+            "title": "Sauerbraten",
+            "description": "Marinated beef roast",
+            "ingredients": [
+              "Beef roast",
+              "Vinegar marinade",
+              "Vegetables",
+              "Spices"
+            ],
+            "instructions": [
+              "Marinate beef",
+              "Slow cook with vegetables",
+              "Serve with gravy"
+            ],
+            "nutrition": ["protein", "iron", "vitamins", "minerals"],
+            "pregnancy_benefits": "Iron for blood production"
+          }
+        ],
+        "snacks": [
+          {
+            "title": "Pretzel with Mustard",
+            "description": "Traditional German snack",
+            "ingredients": [
+              "Soft pretzel",
+              "Mustard",
+              "Butter"
+            ],
+            "instructions": [
+              "Warm pretzel",
+              "Serve with mustard and butter"
+            ],
+            "nutrition": ["carbohydrates", "protein", "vitamins"],
+            "pregnancy_benefits": "Energy and protein"
+          }
+        ]
+      }
+    },
+    "australia": {
+      "name": "Australia",
+      "flag": "🇦🇺",
+      "meals": {
+        "breakfast": [
+          {
+            "title": "Vegemite on Toast",
+            "description": "Classic Australian breakfast",
+            "ingredients": [
+              "Whole grain bread",
+              "Vegemite",
+              "Butter",
+              "Avocado (optional)"
+            ],
+            "instructions": [
+              "Toast bread",
+              "Spread with butter and Vegemite",
+              "Add avocado if desired"
+            ],
+            "nutrition": ["carbohydrates", "vitamins", "fiber"],
+            "pregnancy_benefits": "B vitamins for energy"
+          }
+        ],
+        "lunch": [
+          {
+            "title": "Barramundi with Vegetables",
+            "description": "Australian fish with fresh vegetables",
+            "ingredients": [
+              "Barramundi fillet",
+              "Mixed vegetables",
+              "Lemon",
+              "Herbs",
+              "Olive oil"
+            ],
+            "instructions": [
+              "Grill barramundi",
+              "Steam vegetables",
+              "Serve with lemon and herbs"
+            ],
+            "nutrition": ["protein", "omega-3", "vitamins", "minerals"],
+            "pregnancy_benefits": "Omega-3 for brain development"
+          }
+        ],
+        "dinner": [
+          {
+            "title": "Lamb with Roasted Vegetables",
+            "description": "Australian lamb with vegetables",
+            "ingredients": [
+              "Lamb chops",
+              "Sweet potatoes",
+              "Carrots",
+              "Herbs",
+              "Olive oil"
+            ],
+            "instructions": [
+              "Season and grill lamb",
+              "Roast vegetables",
+              "Serve together"
+            ],
+            "nutrition": ["protein", "iron", "vitamins", "minerals"],
+            "pregnancy_benefits": "Iron for blood production"
+          }
+        ],
+        "snacks": [
+          {
+            "title": "Tim Tam with Tea",
+            "description": "Australian chocolate biscuit",
+            "ingredients": [
+              "Tim Tam biscuits",
+              "Hot tea",
+              "Milk"
+            ],
+            "instructions": [
+              "Serve Tim Tams with hot tea",
+              "Add milk to tea"
+            ],
+            "nutrition": ["carbohydrates", "calcium", "antioxidants"],
+            "pregnancy_benefits": "Calcium and antioxidants"
+          }
+        ]
+      }
+    }
+  }
+} 

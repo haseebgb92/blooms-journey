@@ -7,7 +7,6 @@
  * - PartnerInvitationInput - The input type for the sendPartnerInvitation function.
  * - PartnerInvitationOutput - The return type for the sendPartnerInvitation function.
  */
-import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
 const PartnerInvitationInputSchema = z.object({
@@ -22,42 +21,27 @@ const PartnerInvitationOutputSchema = z.object({
 });
 export type PartnerInvitationOutput = z.infer<typeof PartnerInvitationOutputSchema>;
 
+export async function sendPartnerInvitation(
+  input: PartnerInvitationInput
+): Promise<PartnerInvitationOutput> {
+  const { partnerEmail, userName, userEmail } = input;
+  
+  // Generate static email content
+  const emailBody = `Hi there!
 
-const sendPartnerInvitationFlow = ai.defineFlow(
-  {
-    name: 'sendPartnerInvitationFlow',
-    inputSchema: PartnerInvitationInputSchema,
-    outputSchema: PartnerInvitationOutputSchema,
-  },
-  async ({partnerEmail, userName, userEmail}) => {
-    // In a real application, you would integrate with an email service like SendGrid, Resend,
-    // or a Firebase Extension like "Trigger Email".
-    // For this example, we'll generate the email content and log it to the console to simulate sending.
-    
-    const emailPrompt = `You are an assistant helping a user named "${userName}" invite their partner to the "Bloom Journey" pregnancy app.
+${userName} has invited you to join them on their pregnancy journey using the Bloom Journey app!
 
-Generate a short, warm, and friendly email to the partner with the email address "${partnerEmail}".
+Bloom Journey is a comprehensive pregnancy companion app that helps expectant parents track their pregnancy, get personalized advice, and stay connected throughout this beautiful journey.
 
-The email should:
-1.  Come from the user, "${userName}".
-2.  State that they are inviting them to share the pregnancy journey together on the Bloom Journey app.
-3.  Include a clear call to action to sign up (you can use a placeholder link like "https://your-app-url.com/signup?partnerId=...").
-4.  Have a friendly and excited tone.
+To join ${userName} on Bloom Journey:
+1. Download the Bloom Journey app
+2. Sign up with your email address
+3. Connect with ${userName} using the partner connection feature
 
-Subject: You've been invited to a Bloom Journey!
+This is an exciting time, and ${userName} wants to share every moment with you. Join them on this incredible journey!
 
-Body:
-`;
-
-    const llmResponse = await ai.generate({
-        model: 'googleai/gemini-2.0-flash',
-        prompt: emailPrompt,
-        config: {
-            temperature: 0.7
-        }
-    });
-
-    const emailBody = llmResponse.text;
+Best wishes,
+The Bloom Journey Team`;
 
     // --- START OF SIMULATION ---
     // In a production app, you would replace this section with your email service's API call.
@@ -72,7 +56,12 @@ Body:
     console.log("---------------------------------");
     // --- END OF SIMULATION ---
 
-    const userConfirmationBody = `Hi ${userName},\n\nYou have successfully sent an invitation to ${partnerEmail} to join you on Bloom Journey. They will receive an email shortly with instructions on how to sign up and connect with you.\n\nBest,\nThe Bloom Journey Team`;
+  const userConfirmationBody = `Hi ${userName},
+
+You have successfully sent an invitation to ${partnerEmail} to join you on Bloom Journey. They will receive an email shortly with instructions on how to sign up and connect with you.
+
+Best,
+The Bloom Journey Team`;
     
     // This part also simulates sending a confirmation email to the user who sent the invite.
     console.log("--- SIMULATED CONFIRMATION EMAIL TO USER ---");
@@ -88,11 +77,4 @@ Body:
     return {
         message: `An invitation has been sent to ${partnerEmail}. You'll both be ready to share the journey once they accept!`
     };
-  }
-);
-
-export async function sendPartnerInvitation(
-  input: PartnerInvitationInput
-): Promise<PartnerInvitationOutput> {
-  return await sendPartnerInvitationFlow(input);
 }

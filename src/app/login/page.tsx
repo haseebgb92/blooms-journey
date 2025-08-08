@@ -10,9 +10,11 @@ import Link from "next/link";
 import { useToast } from '@/hooks/use-toast';
 import { auth, googleProvider, appleProvider, sendBrandedPasswordResetEmail } from '@/lib/firebase/clientApp';
 import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { AppleIcon, GoogleIcon } from '@/components/ui/icons';
 import Image from 'next/image';
+import { doc, getDoc } from 'firebase/firestore';
+import { firestore } from '@/lib/firebase/clientApp';
 
 // Bloom Journey Logo Component
 function BloomJourneyLogo() {
@@ -45,12 +47,29 @@ export default function LoginPage() {
     setIsSocialLoading(provider);
     const authProvider = provider === 'google' ? googleProvider : appleProvider;
     try {
-      await signInWithPopup(auth, authProvider);
+      const result = await signInWithPopup(auth, authProvider);
       toast({
         title: "Signed In Successfully",
         description: "Welcome back!",
       });
-      router.push('/home');
+      
+      // Check if user has already accepted agreement
+      const userDocRef = doc(firestore, 'users', result.user.uid);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (userData.agreementAccepted) {
+          // User has already accepted agreement, go to home
+          router.push('/home');
+        } else {
+          // User needs to accept agreement
+          router.push('/agreement');
+        }
+      } else {
+        // New user, needs to accept agreement
+        router.push('/agreement');
+      }
     } catch (error: any) {
       let errorMessage = "Unable to sign in. Please try again.";
       
@@ -78,12 +97,29 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const result = await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: "Signed In Successfully",
         description: "Welcome back!",
       });
-      router.push('/home');
+      
+      // Check if user has already accepted agreement
+      const userDocRef = doc(firestore, 'users', result.user.uid);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (userData.agreementAccepted) {
+          // User has already accepted agreement, go to home
+          router.push('/home');
+        } else {
+          // User needs to accept agreement
+          router.push('/agreement');
+        }
+      } else {
+        // New user, needs to accept agreement
+        router.push('/agreement');
+      }
     } catch (error: any) {
       let errorMessage = "Unable to sign in. Please check your credentials and try again.";
       
@@ -159,8 +195,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
-       <Card className="w-full max-w-md shadow-2xl animate-fade-in-down">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-pink-50 via-blue-50 to-purple-50 px-4">
+      {/* Back to Home Link */}
+      <div className="absolute top-4 left-4">
+        <Link href="/" className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 bg-white/80 backdrop-blur-sm px-3 py-2 rounded-lg shadow-sm">
+          <ArrowRight className="w-4 h-4 rotate-180" />
+          <span>Back to Home</span>
+        </Link>
+      </div>
+      
+       <Card className="w-full max-w-md shadow-2xl animate-fade-in-down bg-white/90 backdrop-blur-sm border-0">
             <CardHeader className="text-center">
                 <BloomJourneyLogo />
                 <CardTitle className="text-3xl font-headline text-primary">Welcome Back</CardTitle>
@@ -228,11 +272,11 @@ export default function LoginPage() {
                     </Button>
                 </form>
             </CardContent>
-            <CardFooter className="flex flex-col gap-4">
-                <p className="text-sm text-center text-muted-foreground">
-                    Don't have an account? <Link href="/signup" className="text-primary hover:underline">Sign Up</Link>
-                </p>
-            </CardFooter>
+                    <CardFooter className="flex flex-col gap-4">
+            <p className="text-sm text-center text-muted-foreground">
+                Don't have an account? <Link href="/onboarding" className="text-primary hover:underline">Get Started</Link>
+            </p>
+        </CardFooter>
         </Card>
     </div>
   );

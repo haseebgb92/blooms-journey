@@ -14,6 +14,8 @@ import { auth, googleProvider, appleProvider, firestore, doc, setDoc, Timestamp 
 import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, UserCredential } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
 import { GoogleIcon, AppleIcon } from '@/components/ui/icons';
+import { ArrowRight } from 'lucide-react';
+import { appDataService } from '@/lib/appDataService';
 
 // Bloom Journey Logo Component
 function BloomJourneyLogo() {
@@ -33,20 +35,44 @@ function BloomJourneyLogo() {
   );
 }
 
-const createInitialUserData = async (user: any, name?: string, gender?: string) => {
+const createInitialUserData = async (user: any, name?: string, gender?: string, onboardingData?: any) => {
     const userDocRef = doc(firestore, 'users', user.uid);
-    const defaultDueDate = new Date();
-    defaultDueDate.setDate(defaultDueDate.getDate() + 180); // Default to ~6 months from now
     
-    await setDoc(userDocRef, {
+    // Use onboarding data if available, otherwise use defaults
+    const dueDate = onboardingData?.dueDate ? new Date(onboardingData.dueDate) : new Date();
+    if (!onboardingData?.dueDate) {
+        dueDate.setDate(dueDate.getDate() + 180); // Default to ~6 months from now
+    }
+    
+    // Calculate current week based on due date
+    const today = new Date();
+    const weeksDiff = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 7));
+    const currentWeek = Math.max(1, 40 - weeksDiff);
+    
+    const userData: any = {
         displayName: name || user.displayName || 'New User',
         email: user.email,
-        gender: gender || 'mother', // Default to mother for existing users
+        gender: gender || 'mother',
         createdAt: Timestamp.now(),
-        dueDate: Timestamp.fromDate(defaultDueDate),
-        currentWeek: 12,
-        timelineWeek: 12,
-    }, { merge: true });
+        dueDate: Timestamp.fromDate(dueDate),
+        currentWeek: currentWeek,
+        timelineWeek: currentWeek,
+    };
+
+    // Add onboarding data if available
+    if (onboardingData) {
+      userData.lastPeriodDate = onboardingData.lastPeriodDate ? Timestamp.fromDate(new Date(onboardingData.lastPeriodDate)) : null;
+      userData.babyCount = onboardingData.babyCount || 'single';
+      userData.notificationTime = onboardingData.notificationTime || '09:00';
+      userData.babyGender = onboardingData.babyGender || 'unspecified';
+      userData.skinTone = onboardingData.skinTone || 'unspecified';
+      userData.momBirthDate = onboardingData.momBirthDate ? Timestamp.fromDate(new Date(onboardingData.momBirthDate)) : null;
+      userData.babyName = onboardingData.babyName || '';
+      userData.preferredCountry = onboardingData.preferredCountry || 'Pakistan';
+      userData.userRole = onboardingData.userRole || 'mom';
+    }
+    
+    await setDoc(userDocRef, userData, { merge: true });
 
     // Add initial appointment
     const appointmentsRef = doc(firestore, 'users', user.uid, 'appointments', 'initial-appointment');
@@ -75,12 +101,67 @@ export default function SignupPage() {
   const router = useRouter();
 
   const handleSuccessfulSignup = async (result: UserCredential, name?: string, gender?: string) => {
-    await createInitialUserData(result.user, name, gender);
+    // Get onboarding data from localStorage if available
+    const onboardingDataStr = localStorage.getItem('onboardingData');
+    let onboardingData = null;
+    
+    if (onboardingDataStr) {
+      try {
+        onboardingData = JSON.parse(onboardingDataStr);
+        // Clear the data from localStorage after using it
+        localStorage.removeItem('onboardingData');
+      } catch (error) {
+        console.error('Error parsing onboarding data:', error);
+      }
+    }
+    
+    await createInitialUserData(result.user, name, gender, onboardingData);
+    
+    // Initialize app data service with user data
+    try {
+      const dueDate = onboardingData?.dueDate ? new Date(onboardingData.dueDate) : new Date();
+      if (!onboardingData?.dueDate) {
+        dueDate.setDate(dueDate.getDate() + 180);
+      }
+      
+      const today = new Date();
+      const weeksDiff = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 7));
+      const currentWeek = Math.max(1, 40 - weeksDiff);
+      
+      await appDataService.initializeUserData({
+        displayName: name || result.user.displayName || 'New User',
+        email: result.user.email || '',
+        gender: gender || 'mother',
+        dueDate: dueDate,
+        currentWeek: currentWeek,
+        timelineWeek: currentWeek,
+        lastPeriodDate: onboardingData?.lastPeriodDate ? new Date(onboardingData.lastPeriodDate) : null,
+        babyCount: onboardingData?.babyCount || 'single',
+        notificationTime: onboardingData?.notificationTime || '09:00',
+        babyGender: onboardingData?.babyGender || 'unspecified',
+        skinTone: onboardingData?.skinTone || 'unspecified',
+        momBirthDate: onboardingData?.momBirthDate ? new Date(onboardingData.momBirthDate) : null,
+        babyName: onboardingData?.babyName || '',
+        preferredCountry: onboardingData?.preferredCountry || 'Pakistan',
+        userRole: onboardingData?.userRole || 'mom',
+        lastLogin: new Date()
+      });
+      
+      // Track signup activity
+      await appDataService.trackActivity({
+        action: 'user_signup',
+        page: 'signup',
+        data: { method: 'email', hasOnboardingData: !!onboardingData }
+      });
+    } catch (error) {
+      console.error('Error initializing app data service:', error);
+    }
+    
     toast({
       title: "Account Created!",
       description: "Welcome to Bloom Journey.",
     });
-    router.push('/home');
+    router.push('/agreement');
   };
 
   const handleSocialSignup = async (provider: 'google' | 'apple') => {
@@ -166,8 +247,16 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
-      <Card className="w-full max-w-md shadow-2xl animate-fade-in-down">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-pink-50 to-yellow-50 px-4">
+      {/* Back to Home Link */}
+      <div className="absolute top-4 left-4">
+        <Link href="/" className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 bg-white/80 backdrop-blur-sm px-3 py-2 rounded-lg shadow-sm">
+          <ArrowRight className="w-4 h-4 rotate-180" />
+          <span>Back to Home</span>
+        </Link>
+      </div>
+      
+      <Card className="w-full max-w-md shadow-2xl animate-fade-in-down bg-white/90 backdrop-blur-sm border-0">
         <CardHeader className="text-center">
             <BloomJourneyLogo />
             <CardTitle className="text-3xl font-headline text-primary">Create Your Account</CardTitle>
@@ -247,6 +336,9 @@ export default function SignupPage() {
         <CardFooter className="flex flex-col gap-4">
             <p className="text-sm text-center text-muted-foreground">
                 Already have an account? <Link href="/login" className="text-primary hover:underline">Sign In</Link>
+            </p>
+            <p className="text-sm text-center text-muted-foreground">
+                Want to set up your pregnancy data first? <Link href="/onboarding" className="text-primary hover:underline">Start Onboarding</Link>
             </p>
         </CardFooter>
       </Card>

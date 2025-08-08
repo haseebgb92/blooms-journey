@@ -65,3 +65,6 @@ export {
   getDoc, 
   setDoc 
 };
+
+// Re-export auth utilities
+export * from './authUtils';

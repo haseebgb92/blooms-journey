@@ -18,8 +18,8 @@ export function BottomNavBar() {
   const pathname = usePathname();
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-background border-t z-50">
-      <nav className="flex items-center justify-around h-full">
+    <div className="lg:hidden mobile-nav bg-background border-t border-gray-200 shadow-lg">
+      <nav className="flex items-center justify-around h-16 safe-area-bottom">
         {navLinks.map((link) => {
           const isActive = pathname.startsWith(link.href);
           return (
@@ -27,12 +27,12 @@ export function BottomNavBar() {
               key={link.href}
               href={link.href}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 w-full h-full text-muted-foreground transition-colors text-center',
+                'flex flex-col items-center justify-center gap-1 w-full h-full text-muted-foreground transition-colors text-center touch-target',
                 isActive ? 'text-primary' : 'hover:text-primary'
               )}
             >
-              <link.icon className="h-5 w-5" />
-              <span className="text-[10px] font-medium">{link.label}</span>
+              <link.icon className="h-5 w-5 sm:h-6 sm:w-6" />
+              <span className="text-xs font-medium">{link.label}</span>
             </Link>
           );
         })}
