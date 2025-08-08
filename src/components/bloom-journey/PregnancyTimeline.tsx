@@ -99,17 +99,17 @@ export function PregnancyTimeline() {
 
   if (isLoading) {
     return (
-        <Card className="w-full hover:shadow-lg transition-shadow duration-300 flex items-center justify-center min-h-[400px]">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Card className="bg-gradient-to-br from-pink-50 to-purple-50 border-2 border-pink-200 shadow-lg hover:shadow-primary/10 transition-shadow duration-300 flex items-center justify-center min-h-[400px]">
+            <Loader2 className="h-8 w-8 animate-spin text-pink-600" />
         </Card>
     );
   }
 
   if (!weekData) {
      return (
-        <Card className="w-full hover:shadow-lg transition-shadow duration-300">
+        <Card className="bg-gradient-to-br from-pink-50 to-purple-50 border-2 border-pink-200 shadow-lg hover:shadow-primary/10 transition-shadow duration-300">
             <CardHeader>
-                <CardTitle className="font-headline text-3xl">
+                <CardTitle className="font-headline text-3xl text-pink-800">
                   {pregnancyProgress ? 
                     `${pregnancyProgress.weeks} weeks ${pregnancyProgress.days} days` : 
                     `Week ${timelineWeek}`
@@ -117,22 +117,22 @@ export function PregnancyTimeline() {
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                <p>No data available for this week.</p>
+                <p className="text-gray-600">No data available for this week.</p>
             </CardContent>
         </Card>
     );
   }
 
   return (
-    <Card className="w-full hover:shadow-lg transition-shadow duration-300">
+    <Card className="bg-gradient-to-br from-pink-50 to-purple-50 border-2 border-pink-200 shadow-lg hover:shadow-primary/10 transition-shadow duration-300">
       <CardHeader>
-        <CardTitle className="font-headline text-3xl">
+        <CardTitle className="font-headline text-3xl text-pink-800">
           {pregnancyProgress ? 
             `${pregnancyProgress.weeks} weeks ${pregnancyProgress.days} days` : 
             `Week ${timelineWeek}`
           }
         </CardTitle>
-        <CardDescription>{weekData.babySize}</CardDescription>
+        <CardDescription className="text-pink-600">{weekData.babySize}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="w-full px-2">
@@ -157,29 +157,29 @@ export function PregnancyTimeline() {
 
         <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
-                <h3 className="font-headline text-xl">Baby's Development</h3>
+                <h3 className="font-headline text-xl text-pink-800">Baby's Development</h3>
                  <Image
                     src={weekData.image || `https://placehold.co/400x300.png`}
                     alt={weekData.imageHint}
                     data-ai-hint={weekData.imageHint}
                     width={400}
                     height={300}
-                    className="rounded-lg object-cover w-full aspect-[4/3]"
+                    className="rounded-lg object-cover w-full aspect-[4/3] border border-pink-200"
                 />
                 <ul className="space-y-2">
                 {weekData.babyDevelopment.map((item, index) => (
                     <li key={index} className="flex items-start gap-2">
-                        <CheckCircle2 className="h-4 w-4 mt-1 text-primary flex-shrink-0" />
-                        <span>{item}</span>
+                        <CheckCircle2 className="h-4 w-4 mt-1 text-pink-600 flex-shrink-0" />
+                        <span className="text-gray-700">{item}</span>
                     </li>
                 ))}
                 </ul>
             </div>
             <div className="space-y-4">
-                <h3 className="font-headline text-xl">Your Body & Symptoms</h3>
+                <h3 className="font-headline text-xl text-pink-800">Your Body & Symptoms</h3>
                 <div className="flex flex-wrap gap-2">
                 {weekData.momSymptoms.map((symptom, index) => (
-                    <Badge key={index} variant="secondary">{symptom}</Badge>
+                    <Badge key={index} variant="secondary" className="bg-pink-100 text-pink-700 border-pink-200">{symptom}</Badge>
                 ))}
                 </div>
             </div>

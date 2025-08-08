@@ -82,9 +82,9 @@ export function WaterIntakeTracker() {
   const waterIcons = Array.from({ length: DAILY_GOAL }, (_, i) => i < waterCount);
 
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-300">
+    <Card className="bg-gradient-to-br from-pink-50 to-purple-50 border-2 border-pink-200 shadow-lg hover:shadow-primary/10 transition-shadow duration-300">
       <CardHeader>
-        <CardTitle className="text-sm font-medium font-body">Water Intake</CardTitle>
+        <CardTitle className="text-sm font-medium font-body text-pink-800">Water Intake</CardTitle>
         <CardDescription className="text-xs">Stay hydrated for you and baby.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

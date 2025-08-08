@@ -92,10 +92,10 @@ export function AppointmentReminders() {
   };
 
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-300">
+    <Card className="bg-gradient-to-br from-pink-50 to-purple-50 border-2 border-pink-200 shadow-lg hover:shadow-primary/10 transition-shadow duration-300">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-            <CardTitle className="text-sm font-medium font-body">Appointments</CardTitle>
+            <CardTitle className="text-sm font-medium font-body text-pink-800">Appointments</CardTitle>
             <CardDescription className="text-xs">Your upcoming visits</CardDescription>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>

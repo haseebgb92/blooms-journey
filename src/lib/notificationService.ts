@@ -1,5 +1,5 @@
 import { auth, firestore } from '@/lib/firebase/clientApp';
-import { doc, getDoc, setDoc, Timestamp, collection, query, where, orderBy, getDocs, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, Timestamp, collection, query, where, orderBy, getDocs, onSnapshot, addDoc, updateDoc } from 'firebase/firestore';
 import { differenceInDays } from 'date-fns';
 import { mobileNotificationService } from './mobileNotificationService';
 
@@ -103,50 +103,50 @@ const shouldShowNotification = async (): Promise<boolean> => {
 };
 
 const getStaticNotification = (week: number): string => {
-  const notifications = {
+  const messages: { [key: number]: string } = {
     1: "Welcome to your pregnancy journey! I'm just a tiny cell right now, but I'm growing fast! 💕",
     2: "I'm implanting in your uterus! You might not feel anything yet, but I'm here! 🌱",
     3: "My neural tube is forming! This is crucial for my brain and spine development! 🧠",
     4: "My heart is starting to beat! It's the most amazing sound you'll ever hear! 💓",
     5: "I'm about the size of a sesame seed! My major organs are beginning to form! 🌱",
-    6: "My tiny arms and legs are starting to develop! I'm growing so fast! 👶",
-    7: "I'm about the size of a blueberry! My brain is developing rapidly! 🫐",
-    8: "My fingers and toes are forming! I'm becoming more human-like every day! ✋",
-    9: "I'm about the size of a grape! My major organs are almost fully formed! 🍇",
-    10: "I'm officially a fetus now! My critical development period is almost complete! 🎉",
-    11: "I'm about the size of a lime! I'm starting to move, but you can't feel me yet! 🍋",
-    12: "First trimester complete! I'm about the size of a plum! 🍑",
-    13: "I'm about the size of a lemon! My bones are hardening! 🍋",
-    14: "I'm about the size of a peach! My facial features are becoming more defined! 🍑",
-    15: "I'm about the size of an apple! I can make sucking motions! 🍎",
-    16: "I'm about the size of an avocado! My heart is pumping 25 quarts of blood daily! 🥑",
-    17: "I'm about the size of a pear! I'm practicing breathing movements! 🍐",
-    18: "I'm about the size of a sweet potato! I can hear your voice now! 🍠",
-    19: "I'm about the size of a mango! My skin is becoming less transparent! 🥭",
-    20: "Halfway there! I'm about the size of a banana! 🍌",
-    21: "I'm about the size of a carrot! I'm developing my sleep cycles! 🥕",
-    22: "I'm about the size of a coconut! My taste buds are developing! 🥥",
-    23: "I'm about the size of a grapefruit! I can hear sounds from outside! 🍊",
-    24: "I'm about the size of a corn! My face is almost fully formed! 🌽",
-    25: "I'm about the size of a cauliflower! I'm gaining weight rapidly! 🥦",
-    26: "I'm about the size of a lettuce! My eyes are opening! 🥬",
-    27: "I'm about the size of a broccoli! I'm practicing breathing! 🥦",
-    28: "I'm about the size of an eggplant! I can dream now! 🍆",
-    29: "I'm about the size of a butternut squash! I'm getting stronger! 🎃",
-    30: "I'm about the size of a cabbage! I'm gaining about half a pound per week! 🥬",
-    31: "I'm about the size of a pineapple! I'm developing my immune system! 🍍",
-    32: "I'm about the size of a squash! I'm practicing breathing and sucking! 🎃",
-    33: "I'm about the size of a durian! My bones are hardening! 🥭",
-    34: "I'm about the size of a cantaloupe! I'm gaining weight rapidly! 🍈",
-    35: "I'm about the size of a honeydew! I'm almost ready to meet you! 🍈",
-    36: "I'm about the size of a romaine lettuce! I'm in the final stretch! 🥬",
-    37: "I'm about the size of a Swiss chard! I'm considered full-term soon! 🥬",
-    38: "I'm about the size of a leek! I'm gaining about an ounce per day! 🧅",
-    39: "I'm about the size of a mini watermelon! I'm almost ready! 🍉",
-    40: "I'm about the size of a small pumpkin! I'm ready to meet you! 🎃"
+    6: "I'm growing so fast! My heart is beating and my brain is developing! 💕",
+    7: "I'm the size of a blueberry now! My arms and legs are starting to form! 🫐",
+    8: "I'm about the size of a kidney bean! I'm moving around, but you can't feel me yet! 🫘",
+    9: "I'm the size of a grape! My tiny fingers and toes are forming! 🍇",
+    10: "I'm about the size of a kumquat! My major organs are all in place! 🍊",
+    11: "I'm the size of a fig! I'm starting to look more like a baby! 🫒",
+    12: "I'm about the size of a lime! My reflexes are developing! 🍋",
+    13: "I'm the size of a lemon! I can make sucking motions now! 🍋",
+    14: "I'm about the size of a peach! My facial muscles are working! 🍑",
+    15: "I'm the size of an apple! I can move my arms and legs! 🍎",
+    16: "I'm about the size of an avocado! I'm practicing breathing! 🥑",
+    17: "I'm the size of a pear! I can hear your voice now! 🍐",
+    18: "I'm about the size of a sweet potato! I'm getting stronger! 🍠",
+    19: "I'm the size of a mango! I'm developing my sense of taste! 🥭",
+    20: "I'm about the size of a banana! I'm halfway there! 🍌",
+    21: "I'm the size of a carrot! I'm very active now! 🥕",
+    22: "I'm about the size of a coconut! I can hear your heartbeat! 🥥",
+    23: "I'm the size of a grapefruit! My face is fully formed! 🍊",
+    24: "I'm about the size of an ear of corn! I'm growing rapidly! 🌽",
+    25: "I'm the size of a cauliflower! I'm practicing breathing! 🥦",
+    26: "I'm about the size of a head of lettuce! My eyes are opening! 🥬",
+    27: "I'm the size of a broccoli! I'm getting chubbier! 🥦",
+    28: "I'm about the size of an eggplant! I'm very responsive! 🍆",
+    29: "I'm the size of a butternut squash! I'm getting stronger! 🎃",
+    30: "I'm about the size of a cabbage! I'm practicing breathing! 🥬",
+    31: "I'm the size of a pineapple! I'm gaining weight fast! 🍍",
+    32: "I'm about the size of a large jicama! I'm very active! 🥔",
+    33: "I'm the size of a pineapple! I'm practicing breathing! 🍍",
+    34: "I'm about the size of a cantaloupe! I'm getting ready! 🍈",
+    35: "I'm the size of a honeydew melon! I'm almost ready! 🍈",
+    36: "I'm about the size of a romaine lettuce! I'm getting bigger! 🥬",
+    37: "I'm the size of a Swiss chard! I'm full-term soon! 🥬",
+    38: "I'm about the size of a leek! I'm ready to meet you! 🧅",
+    39: "I'm the size of a mini watermelon! I'm almost here! 🍉",
+    40: "I'm about the size of a small pumpkin! I'm ready to be born! 🎃"
   };
 
-  return notifications[week as keyof typeof notifications] || "I'm growing and developing every day! 💕";
+  return messages[week] || "I'm growing and developing every day! I can't wait to meet you! 💕";
 };
 
 export class NotificationService {
@@ -197,9 +197,12 @@ export class NotificationService {
 
       // Save notification to Firestore
       const notificationsRef = collection(firestore, 'users', user.uid, 'notifications');
-      await setDoc(doc(notificationsRef, notification.id), {
+      await addDoc(notificationsRef, {
         ...notification,
-        timestamp: Timestamp.fromDate(notification.timestamp)
+        timestamp: Timestamp.fromDate(notification.timestamp),
+        createdAt: Timestamp.now(),
+        sound: true,
+        completed: false
       });
 
       // Update last notification time
@@ -216,7 +219,8 @@ export class NotificationService {
           body: message,
           scheduledTime: new Date(),
           userId: user.uid,
-          data: { week: currentWeek }
+          data: { week: currentWeek },
+          sound: true
         });
       }
 
@@ -234,7 +238,7 @@ export class NotificationService {
     try {
       const notificationsRef = collection(firestore, 'users', user.uid, 'notifications');
       
-      // Simplified query to avoid index requirements - get all notifications and filter client-side
+      // Get all notifications and filter client-side
       const q = query(notificationsRef, orderBy('timestamp', 'desc'));
       
       const snapshot = await getDocs(q);
@@ -242,7 +246,7 @@ export class NotificationService {
       
       snapshot.forEach((doc) => {
         const data = doc.data();
-        // Filter for unread notifications on the client side
+        // Filter for unread notifications
         if (!data.read) {
           notifications.push({
             ...data,
@@ -264,7 +268,7 @@ export class NotificationService {
 
     try {
       const notificationRef = doc(firestore, 'users', user.uid, 'notifications', notificationId);
-      await setDoc(notificationRef, { read: true }, { merge: true });
+      await updateDoc(notificationRef, { read: true });
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
@@ -293,45 +297,37 @@ export class NotificationService {
     }
   }
 
-  // Initialize mobile notifications
   async initializeMobileNotifications(): Promise<boolean> {
     try {
       return await this.mobileService.initialize();
-    } catch (error: any) {
-      // Handle permission errors gracefully
-      if (error.code === 'permission-denied') {
-        console.log('Permission denied for mobile notifications, skipping initialization');
-        return false;
-      } else {
-        console.error('Error initializing mobile notifications:', error);
-        return false;
-      }
+    } catch (error) {
+      console.error('Error initializing mobile notifications:', error);
+      return false;
     }
   }
 
-  // Schedule water intake reminder
   async scheduleWaterIntakeReminder(times: string[]): Promise<void> {
     const user = auth.currentUser;
     if (!user) return;
 
     try {
-      const reminders = times.map(time => ({
-        id: `water-${time.replace(':', '-')}`,
-        time,
-        enabled: true,
-        message: '💧 Time to drink water! Stay hydrated for you and your baby.'
-      }));
-
-      for (const reminder of reminders) {
-        await this.mobileService.scheduleWaterIntakeReminder(reminder);
+      for (const time of times) {
+        await this.mobileService.scheduleWaterIntakeReminder({
+          id: `water-${Date.now()}`,
+          time,
+          enabled: true,
+          message: 'Time to hydrate!'
+        });
       }
     } catch (error) {
       console.error('Error scheduling water intake reminders:', error);
     }
   }
 
-  // Schedule doctor appointment reminder
   async scheduleDoctorAppointment(appointment: any): Promise<void> {
+    const user = auth.currentUser;
+    if (!user) return;
+
     try {
       await this.mobileService.scheduleDoctorAppointment(appointment);
     } catch (error) {
@@ -339,7 +335,6 @@ export class NotificationService {
     }
   }
 
-  // Get all reminders
   async getReminders(): Promise<any[]> {
     try {
       return await this.mobileService.getReminders();
@@ -349,12 +344,11 @@ export class NotificationService {
     }
   }
 
-  // Mark reminder as completed
   async markReminderCompleted(reminderId: string): Promise<void> {
     try {
       await this.mobileService.markReminderCompleted(reminderId);
     } catch (error) {
-      console.error('Error marking reminder as completed:', error);
+      console.error('Error marking reminder completed:', error);
     }
   }
 
@@ -363,18 +357,13 @@ export class NotificationService {
       clearInterval(this.checkInterval);
     }
 
-    this.checkInterval = setInterval(async () => {
-      const shouldShow = await this.shouldShowNotification();
-      if (shouldShow) {
-        const notification = await this.generateBabyNotification();
-        if (notification) {
-          this.triggerNotificationDisplay(notification);
-        }
-      }
-    }, 60000); // Check every minute
+    // Check immediately
+    this.checkNotifications();
 
-    // Start mobile notification service
-    this.mobileService.startReminderCheck();
+    // Then check every 5 minutes
+    this.checkInterval = setInterval(() => {
+      this.checkNotifications();
+    }, 5 * 60 * 1000); // 5 minutes
   }
 
   stopNotificationCheck(): void {
@@ -382,18 +371,25 @@ export class NotificationService {
       clearInterval(this.checkInterval);
       this.checkInterval = null;
     }
+  }
 
-    // Stop mobile notification service
-    this.mobileService.stopReminderCheck();
+  private async checkNotifications(): Promise<void> {
+    try {
+      const shouldShow = await this.shouldShowNotification();
+      if (shouldShow) {
+        const notification = await this.generateBabyNotification();
+        if (notification) {
+          this.triggerNotificationDisplay(notification);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking notifications:', error);
+    }
   }
 
   private triggerNotificationDisplay(notification: BabyNotification): void {
-    // This would typically trigger a UI notification
-    // For now, we'll just log it
-    console.log('Baby notification:', notification.message);
-    
-    // You can implement custom notification display here
-    // For example, showing a toast notification or modal
+    // This can be used to trigger UI updates or other notification displays
+    console.log('Baby notification generated:', notification);
   }
 }
 

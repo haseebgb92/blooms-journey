@@ -44,9 +44,9 @@ export function BabyChat() {
   };
 
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-300">
+    <Card className="bg-gradient-to-br from-pink-50 to-purple-50 border-2 border-pink-200 shadow-lg hover:shadow-primary/10 transition-shadow duration-300">
       <CardHeader>
-        <CardTitle className="text-sm font-medium font-body">A Message from Baby</CardTitle>
+        <CardTitle className="text-sm font-medium font-body text-pink-800">A Message from Baby</CardTitle>
         <CardDescription className="text-xs">A daily hello from inside the womb.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

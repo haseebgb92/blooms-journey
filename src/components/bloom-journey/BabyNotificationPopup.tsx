@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { X, Heart, Utensils, Activity, AlertCircle } from 'lucide-react';
+import { X, Heart, Utensils, Activity, AlertCircle, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { auth } from '@/lib/firebase/clientApp';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -94,6 +94,14 @@ export function BabyNotificationPopup() {
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDismiss}
+                    className="h-6 w-6 p-0 hover:bg-pink-100 rounded-full"
+                  >
+                    <ArrowLeft className="h-3 w-3" />
+                  </Button>
                   <div className="p-2 bg-pink-100 rounded-full">
                     <Heart className="h-5 w-5 text-pink-600" />
                   </div>

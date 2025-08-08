@@ -20,8 +20,39 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const firestore = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
+
+// Configure Google provider with additional scopes and settings
 const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope('email');
+googleProvider.addScope('profile');
+googleProvider.setCustomParameters({
+  prompt: 'select_account',
+  access_type: 'offline'
+});
+
+// Configure Apple provider
 const appleProvider = new OAuthProvider('apple.com');
+appleProvider.addScope('email');
+appleProvider.addScope('name');
+
+// Debug function to check Firebase configuration
+const debugFirebaseConfig = () => {
+  if (typeof window !== 'undefined') {
+    console.log('Firebase Config:', {
+      apiKey: firebaseConfig.apiKey ? '✅ Set' : '❌ Missing',
+      authDomain: firebaseConfig.authDomain ? '✅ Set' : '❌ Missing',
+      projectId: firebaseConfig.projectId ? '✅ Set' : '❌ Missing',
+      storageBucket: firebaseConfig.storageBucket ? '✅ Set' : '❌ Missing',
+      messagingSenderId: firebaseConfig.messagingSenderId ? '✅ Set' : '❌ Missing',
+      appId: firebaseConfig.appId ? '✅ Set' : '❌ Missing'
+    });
+  }
+};
+
+// Call debug function in development
+if (process.env.NODE_ENV === 'development') {
+  debugFirebaseConfig();
+}
 
 // Custom password reset email function with branded templates
 const sendBrandedPasswordResetEmail = async (email: string) => {

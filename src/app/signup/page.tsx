@@ -167,11 +167,16 @@ export default function SignupPage() {
   const handleSocialSignup = async (provider: 'google' | 'apple') => {
     setIsSocialLoading(provider);
     const authProvider = provider === 'google' ? googleProvider : appleProvider;
+    
     try {
+      console.log(`Attempting ${provider} sign-up...`);
       const result = await signInWithPopup(auth, authProvider);
+      console.log(`${provider} sign-up successful:`, result.user.email);
+      
       // For social signups, we'll default to mother but allow them to change it in profile
       await handleSuccessfulSignup(result, undefined, 'mother');
     } catch (error: any) {
+      console.error(`${provider} sign-up error:`, error);
       let errorMessage = "Unable to create account. Please try again.";
       
       if (error.code === 'auth/popup-closed-by-user') {
@@ -184,6 +189,12 @@ export default function SignupPage() {
         errorMessage = "An account with this email already exists. Please sign in instead.";
       } else if (error.code === 'auth/network-request-failed') {
         errorMessage = "Network error. Please check your connection and try again.";
+      } else if (error.code === 'auth/unauthorized-domain') {
+        errorMessage = "This domain is not authorized for Google sign-in. Please contact support.";
+      } else if (error.code === 'auth/operation-not-allowed') {
+        errorMessage = "Google sign-in is not enabled. Please contact support.";
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        errorMessage = "Sign up was cancelled. Please try again.";
       }
       
       toast({

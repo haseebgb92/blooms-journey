@@ -191,14 +191,14 @@ export function MealPlanner() {
 
   if (isLoading) {
     return (
-      <Card className="shadow-lg border-primary/20">
+      <Card className="bg-gradient-to-br from-pink-50 to-purple-50 border-2 border-pink-200 shadow-lg hover:shadow-primary/10 transition-shadow duration-300">
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-full">
               <Utensils className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <CardTitle className="font-headline text-2xl">Meal Planner</CardTitle>
+              <CardTitle className="font-headline text-2xl text-pink-800">Meal Planner</CardTitle>
               <CardDescription>Loading your personalized meal suggestions...</CardDescription>
             </div>
           </div>
@@ -215,14 +215,14 @@ export function MealPlanner() {
   }
 
   return (
-    <Card className="shadow-lg border-primary/20 hover:shadow-primary/10 transition-shadow duration-300">
+    <Card className="bg-gradient-to-br from-pink-50 to-purple-50 border-2 border-pink-200 shadow-lg hover:shadow-primary/10 transition-shadow duration-300">
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-full">
             <Utensils className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <CardTitle className="font-headline text-2xl">Meal Planner</CardTitle>
+            <CardTitle className="font-headline text-2xl text-pink-800">Meal Planner</CardTitle>
             <CardDescription>
               Personalized meal suggestions for Week {currentWeek} of your pregnancy
             </CardDescription>

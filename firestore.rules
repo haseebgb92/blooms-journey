@@ -17,5 +17,10 @@ service cloud.firestore {
     match /communityChat/{messageId} {
       allow read, write: if request.auth != null;
     }
+
+    // Reviews - allow authenticated users to read and write
+    match /reviews/{reviewId} {
+      allow read, write: if request.auth != null;
+    }
   }
 }

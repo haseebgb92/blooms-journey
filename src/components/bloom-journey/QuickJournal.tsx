@@ -44,9 +44,9 @@ export function QuickJournal() {
     };
 
     return (
-        <Card className="hover:shadow-lg transition-shadow duration-300">
+        <Card className="bg-gradient-to-br from-pink-50 to-purple-50 border-2 border-pink-200 shadow-lg hover:shadow-primary/10 transition-shadow duration-300">
             <CardHeader>
-                <CardTitle className="text-sm font-medium font-body">Quick Journal</CardTitle>
+                <CardTitle className="text-sm font-medium font-body text-pink-800">Quick Journal</CardTitle>
                 <CardDescription className="text-xs">Jot down a quick thought.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

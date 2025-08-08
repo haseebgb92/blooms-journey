@@ -44,7 +44,7 @@ export function BabyVoice({ week, day = 1, className = "" }: BabyVoiceProps) {
   if (!isVisible) return null;
 
   return (
-    <Card className={`bg-gradient-to-r from-pink-50 to-pink-100 border-pink-200 shadow-lg ${className}`}>
+    <Card className={`bg-gradient-to-br from-pink-50 to-purple-50 border-2 border-pink-200 shadow-lg hover:shadow-primary/10 transition-shadow duration-300 ${className}`}>
       <CardContent className="p-4">
         <div className="flex items-start space-x-3">
           <div className="w-10 h-10 bg-pink-200 rounded-full flex items-center justify-center flex-shrink-0 animate-pulse">

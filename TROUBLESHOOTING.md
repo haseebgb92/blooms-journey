@@ -85,100 +85,150 @@ Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
 # Reinstall dependencies
 npm install
 
-# Clear caches
-npm cache clean --force
-
-# Rebuild
-npm run build
+# Restart development server
+npm run dev
 ```
 
-### 7. DOM Nesting Issues
+## Google Authentication Issues
 
-**Error**: `<p> cannot contain a nested <div>. See this log for the ancestor stack trace.`
+### 1. Google Sign-In Not Working
 
+**Common Issues and Solutions**:
+
+#### **Issue**: Pop-up blocked by browser
 **Solution**:
+- Allow pop-ups for the domain
+- Check browser settings for pop-up blockers
+- Try using incognito/private mode
+- Clear browser cache and cookies
+
+#### **Issue**: Unauthorized domain error
+**Solution**:
+1. Go to [Firebase Console](https://console.firebase.google.com)
+2. Select your project: `bloom-journey-cfezc`
+3. Navigate to **Authentication** → **Settings** → **Authorized domains**
+4. Add your domain:
+   - `localhost` (for development)
+   - `127.0.0.1` (for development)
+   - Your production domain
+
+#### **Issue**: Google sign-in not enabled
+**Solution**:
+1. Go to [Firebase Console](https://console.firebase.google.com)
+2. Navigate to **Authentication** → **Sign-in method**
+3. Enable **Google** provider
+4. Configure OAuth consent screen if needed
+
+#### **Issue**: Network errors
+**Solution**:
+- Check internet connection
+- Try different network
+- Check if Firebase services are accessible
+- Verify firewall settings
+
+### 2. Debugging Google Authentication
+
+**Add these console logs to debug**:
+
 ```typescript
-// ❌ Wrong - div inside p context
-<p>
-  <div>Content</div>
-</p>
+// In handleSocialSignIn function
+console.log('Firebase Auth State:', auth.currentUser);
+console.log('Google Provider Config:', googleProvider);
+console.log('Attempting Google sign-in...');
 
-// ✅ Correct - use span instead
-<p>
-  <span>Content</span>
-</p>
-
-// ✅ Correct - use proper semantic structure
-<div>
-  <p>Content</p>
-</div>
+try {
+  const result = await signInWithPopup(auth, googleProvider);
+  console.log('Google sign-in successful:', result.user.email);
+} catch (error) {
+  console.error('Google sign-in error:', error);
+  console.error('Error code:', error.code);
+  console.error('Error message:', error.message);
+}
 ```
 
-**Common Fixes**:
-- Replace `<div>` with `<span className="block">` when inside paragraph contexts
-- Use semantic HTML structure (divs contain paragraphs, not vice versa)
-- Check for nested elements in bullet points and lists
-- Ensure proper component hierarchy in React components
+### 3. Firebase Configuration Check
 
-**Components to Check**:
-- `AiPregnancyPal.tsx` - bullet point rendering and CardDescription content
-- `MealPlanner.tsx` - meal content rendering  
-- `NotificationDropdown.tsx` - dropdown menu items
-- `ChatPage.tsx` - message rendering with flex properties
+**Verify your Firebase config**:
 
-**Specific Fixes Applied**:
-1. **CardDescription with div elements**: Replace `<div>` with `<span className="flex items-center gap-2">` inside `CardDescription`
-2. **Bullet points in paragraphs**: Use `<span className="block">` instead of `<div>` for bullet point containers
-3. **Flex properties on p tags**: Replace `<p className="flex">` with `<div className="flex">` for elements that need flexbox
-4. **Dropdown menu items**: Use `<span className="block">` instead of `<div>` inside `DropdownMenuItem`
+```typescript
+// Check if all required fields are set
+const firebaseConfig = {
+  apiKey: "AIzaSyAwV1-PtT_1ld0Wru3BQqH0pZ2T4h65b_s", // ✅
+  authDomain: "bloom-journey-cfezc.firebaseapp.com", // ✅
+  projectId: "bloom-journey-cfezc", // ✅
+  storageBucket: "bloom-journey-cfezc.appspot.com", // ✅
+  messagingSenderId: "246287222430", // ✅
+  appId: "1:246287222430:web:5b02ff554caf7933c55d8f" // ✅
+};
+```
 
-## Prevention Tips
+### 4. Environment-Specific Issues
 
-1. **Regular Cache Clearing**: Clear `.next` folder periodically
-2. **Process Management**: Always stop Node.js processes before restarting
-3. **Port Management**: Use different ports if conflicts occur
-4. **Dependency Updates**: Keep dependencies updated
-5. **TypeScript**: Use strict mode and fix errors promptly
+#### **Development Environment**:
+- Ensure `localhost` is in authorized domains
+- Check if running on correct port (9002)
+- Verify no CORS issues
 
-## Development Workflow
+#### **Production Environment**:
+- Add production domain to authorized domains
+- Check SSL certificate
+- Verify domain configuration
 
-1. **Start Development**:
-   ```powershell
-   npm run dev
+### 5. Alternative Solutions
+
+#### **If Google sign-in still doesn't work**:
+
+1. **Use Email/Password Authentication**:
+   - Users can still sign up with email/password
+   - Google sign-in is optional
+
+2. **Implement Fallback**:
+   ```typescript
+   try {
+     await signInWithPopup(auth, googleProvider);
+   } catch (error) {
+     if (error.code === 'auth/popup-blocked') {
+       // Fallback to redirect
+       await signInWithRedirect(auth, googleProvider);
+     }
+   }
    ```
 
-2. **Build for Production**:
-   ```powershell
-   npm run build
-   npm start
-   ```
+3. **Check Browser Compatibility**:
+   - Test in different browsers
+   - Check browser console for errors
+   - Verify JavaScript is enabled
 
-3. **Clean Restart**:
-   ```powershell
-   Get-Process -Name "node" -ErrorAction SilentlyContinue | Stop-Process -Force
-   Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue
-   npm run dev
-   ```
+### 6. Common Error Codes
 
-## Emergency Recovery
+| Error Code | Description | Solution |
+|------------|-------------|----------|
+| `auth/popup-closed-by-user` | User closed popup | Inform user to try again |
+| `auth/popup-blocked` | Popup blocked by browser | Allow popups for site |
+| `auth/unauthorized-domain` | Domain not authorized | Add domain to Firebase Console |
+| `auth/operation-not-allowed` | Google sign-in disabled | Enable in Firebase Console |
+| `auth/network-request-failed` | Network error | Check internet connection |
+| `auth/cancelled-popup-request` | Multiple popup requests | Wait before retrying |
 
-If the app becomes completely unresponsive:
+### 7. Testing Google Authentication
 
-1. **Kill all processes**:
-   ```powershell
-   Get-Process -Name "node" -ErrorAction SilentlyContinue | Stop-Process -Force
-   ```
+**Test Steps**:
+1. Open browser developer tools (F12)
+2. Go to Console tab
+3. Try Google sign-in
+4. Check for error messages
+5. Verify network requests
+6. Test in incognito mode
 
-2. **Clean everything**:
-   ```powershell
-   Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue
-   Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
-   ```
+**Expected Behavior**:
+- Popup opens with Google sign-in
+- User can select account
+- Successfully redirects to app
+- User data is stored in Firebase
 
-3. **Fresh install**:
-   ```powershell
-   npm install
-   npm run dev
-   ```
+## Additional Resources
 
-This should resolve most common development issues with Next.js and Turbopack.
+- [Firebase Authentication Documentation](https://firebase.google.com/docs/auth)
+- [Google Sign-In Setup Guide](https://firebase.google.com/docs/auth/web/google-signin)
+- [Firebase Console](https://console.firebase.google.com)
+- [Troubleshooting Firebase Auth](https://firebase.google.com/docs/auth/web/troubleshooting)

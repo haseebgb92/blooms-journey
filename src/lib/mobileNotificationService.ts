@@ -1,6 +1,6 @@
 import { auth, firestore } from '@/lib/firebase/clientApp';
-import { doc, getDoc, setDoc, Timestamp, collection, query, where, orderBy, getDocs, onSnapshot } from 'firebase/firestore';
-import { differenceInDays, differenceInHours, isToday, isTomorrow, format, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
+import { doc, getDoc, setDoc, Timestamp, collection, query, where, orderBy, getDocs, onSnapshot, addDoc, updateDoc } from 'firebase/firestore';
+import { differenceInDays, differenceInHours, isToday, isTomorrow, format, isAfter, isBefore, startOfDay, endOfDay, parseISO, isEqual } from 'date-fns';
 
 export interface ReminderNotification {
   id: string;
@@ -11,6 +11,9 @@ export interface ReminderNotification {
   completed: boolean;
   userId: string;
   data?: any;
+  createdAt?: Date;
+  sound?: boolean;
+  read?: boolean;
 }
 
 export interface WaterIntakeReminder {
@@ -69,6 +72,7 @@ export class MobileNotificationService {
   private checkInterval: NodeJS.Timeout | null = null;
   private isSupported: boolean = false;
   private permission: NotificationPermission = 'default';
+  private audioContext: AudioContext | null = null;
 
   static getInstance(): MobileNotificationService {
     if (!MobileNotificationService.instance) {
@@ -96,26 +100,23 @@ export class MobileNotificationService {
 
       // Request notification permission
       if (this.permission === 'default') {
-        this.permission = await Notification.requestPermission();
+        const permission = await Notification.requestPermission();
+        this.permission = permission;
+        
+        if (permission !== 'granted') {
+          console.log('Notification permission denied');
+          return false;
+        }
       }
 
-      if (this.permission === 'granted') {
-        console.log('Notification permission granted');
-        this.startReminderCheck();
-        return true;
-      } else {
-        console.log('Notification permission denied');
-        return false;
-      }
-    } catch (error: any) {
-      // Handle service worker registration errors gracefully
-      if (error.code === 'permission-denied' || error.name === 'NotAllowedError') {
-        console.log('Service worker registration failed due to permissions');
-        return false;
-      } else {
-        console.error('Error initializing mobile notifications:', error);
-        return false;
-      }
+      // Start checking for reminders
+      this.startReminderCheck();
+      
+      console.log('Mobile notifications initialized successfully');
+      return true;
+    } catch (error) {
+      console.error('Error initializing mobile notifications:', error);
+      return false;
     }
   }
 
@@ -125,9 +126,13 @@ export class MobileNotificationService {
       clearInterval(this.checkInterval);
     }
 
-    this.checkInterval = setInterval(async () => {
-      await this.checkReminders();
-    }, 60000); // Check every minute
+    // Check immediately
+    this.checkReminders();
+
+    // Then check every minute
+    this.checkInterval = setInterval(() => {
+      this.checkReminders();
+    }, 60000); // 1 minute
   }
 
   // Stop checking for reminders
@@ -138,10 +143,10 @@ export class MobileNotificationService {
     }
   }
 
-  // Check for due reminders
+  // Check all reminders
   private async checkReminders(): Promise<void> {
     const user = auth.currentUser;
-    if (!user || this.permission !== 'granted') return;
+    if (!user) return;
 
     try {
       // Check water intake reminders
@@ -177,36 +182,51 @@ export class MobileNotificationService {
       
       if (!reminderSettings?.waterIntake?.enabled) return;
 
+      const times = reminderSettings.waterIntake.times || [];
       const now = new Date();
       const currentTime = format(now, 'HH:mm');
-      const times = reminderSettings.waterIntake.times || ['09:00', '12:00', '15:00', '18:00'];
 
-      // Check if current time matches any scheduled time
-      if (times.includes(currentTime)) {
-        const lastWaterReminder = data.lastWaterReminder;
-        const today = startOfDay(now);
+      // Check if current time matches any reminder time (within 1 minute)
+      for (const time of times) {
+        const [hours, minutes] = time.split(':').map(Number);
+        const reminderTime = new Date();
+        reminderTime.setHours(hours, minutes, 0, 0);
+        
+        const timeDiff = Math.abs(now.getTime() - reminderTime.getTime());
+        const oneMinute = 60 * 1000;
 
-        if (!lastWaterReminder || !isToday(lastWaterReminder.toDate())) {
-          await this.sendNotification({
-            type: 'water_intake',
-            title: '💧 Time to Hydrate!',
-            body: 'Your baby needs you to stay hydrated! Drink a glass of water now.',
-            scheduledTime: now,
-            userId: user.uid,
-            data: { time: currentTime }
-          });
+        if (timeDiff <= oneMinute) {
+          // Check if we already sent a notification for this time today
+          const today = startOfDay(now);
+          const tomorrow = endOfDay(now);
+          
+          const notificationsRef = collection(firestore, 'users', user.uid, 'notifications');
+          const q = query(
+            notificationsRef,
+            where('type', '==', 'water_intake'),
+            where('scheduledTime', '>=', Timestamp.fromDate(today)),
+            where('scheduledTime', '<=', Timestamp.fromDate(tomorrow)),
+            where('data.time', '==', time)
+          );
 
-          // Update last water reminder time
-          await setDoc(userDocRef, { lastWaterReminder: Timestamp.now() }, { merge: true });
+          const snapshot = await getDocs(q);
+          
+          if (snapshot.empty) {
+            // Send water intake reminder
+            await this.sendNotification({
+              type: 'water_intake',
+              title: '💧 Time to Hydrate!',
+              body: 'Your baby needs you to stay hydrated! Drink a glass of water now.',
+              scheduledTime: now,
+              userId: user.uid,
+              data: { time },
+              sound: true
+            });
+          }
         }
       }
-    } catch (error: any) {
-      // Handle permission errors gracefully
-      if (error.code === 'permission-denied') {
-        console.log('Permission denied for water intake reminders, skipping...');
-      } else {
-        console.error('Error checking water intake reminders:', error);
-      }
+    } catch (error) {
+      console.error('Error checking water intake reminders:', error);
     }
   }
 
@@ -226,39 +246,51 @@ export class MobileNotificationService {
       
       if (!reminderSettings?.doctorAppointments?.enabled) return;
 
+      // Get appointments from Firestore
       const appointmentsRef = collection(firestore, 'users', user.uid, 'appointments');
-      const appointmentsQuery = query(appointmentsRef, where('reminderSent', '==', false));
+      const appointmentsQuery = query(appointmentsRef, where('date', '>=', Timestamp.now()));
       const appointmentsSnapshot = await getDocs(appointmentsQuery);
 
       const now = new Date();
       const reminderHours = reminderSettings.doctorAppointments.reminderHours || 24;
 
-      appointmentsSnapshot.forEach(async (doc) => {
+      appointmentsSnapshot.forEach((doc) => {
         const appointment = doc.data();
         const appointmentDate = appointment.date.toDate();
         const timeUntilAppointment = differenceInHours(appointmentDate, now);
 
         if (timeUntilAppointment <= reminderHours && timeUntilAppointment > 0) {
-          await this.sendNotification({
-            type: 'doctor_appointment',
-            title: '🏥 Doctor Appointment Reminder',
-            body: `You have a doctor appointment in ${timeUntilAppointment} hours: ${appointment.title}`,
-            scheduledTime: now,
-            userId: user.uid,
-            data: { appointmentId: doc.id, appointment }
-          });
+          // Check if we already sent a reminder for this appointment
+          const notificationsRef = collection(firestore, 'users', user.uid, 'notifications');
+          const q = query(
+            notificationsRef,
+            where('type', '==', 'doctor_appointment'),
+            where('data.appointmentId', '==', doc.id)
+          );
 
-          // Mark reminder as sent
-          await setDoc(doc.ref, { reminderSent: true }, { merge: true });
+          getDocs(q).then((snapshot) => {
+            if (snapshot.empty) {
+              // Send appointment reminder
+              this.sendNotification({
+                type: 'doctor_appointment',
+                title: '🏥 Doctor Appointment Reminder',
+                body: `You have a doctor appointment tomorrow at ${appointment.time}. Don't forget!`,
+                scheduledTime: now,
+                userId: user.uid,
+                data: { 
+                  appointmentId: doc.id,
+                  appointmentDate: appointment.date,
+                  time: appointment.time,
+                  location: appointment.location
+                },
+                sound: true
+              });
+            }
+          });
         }
       });
-    } catch (error: any) {
-      // Handle permission errors gracefully
-      if (error.code === 'permission-denied') {
-        console.log('Permission denied for doctor appointments, skipping...');
-      } else {
-        console.error('Error checking doctor appointments:', error);
-      }
+    } catch (error) {
+      console.error('Error checking doctor appointments:', error);
     }
   }
 
@@ -279,13 +311,13 @@ export class MobileNotificationService {
       if (!reminderSettings?.babyMessages?.enabled) return;
 
       const lastBabyMessage = data.lastBabyMessage;
+      const frequency = reminderSettings.babyMessages.frequency || 6;
       const now = new Date();
 
-      // Send baby message every 6 hours if enabled
-      if (!lastBabyMessage || 
-          differenceInHours(now, lastBabyMessage.toDate()) >= (reminderSettings.babyMessages.frequency || 6)) {
-        
-        const currentWeek = this.calculateCurrentWeek(data.dueDate?.toDate());
+      // Check if enough time has passed since last message
+      if (!lastBabyMessage || differenceInHours(now, lastBabyMessage.toDate()) >= frequency) {
+        const dueDate = data.dueDate?.toDate();
+        const currentWeek = this.calculateCurrentWeek(dueDate);
         const message = this.getBabyMessage(currentWeek);
 
         await this.sendNotification({
@@ -294,23 +326,21 @@ export class MobileNotificationService {
           body: message,
           scheduledTime: now,
           userId: user.uid,
-          data: { week: currentWeek }
+          data: { week: currentWeek },
+          sound: true
         });
 
         // Update last baby message time
-        await setDoc(userDocRef, { lastBabyMessage: Timestamp.now() }, { merge: true });
+        await setDoc(userDocRef, {
+          lastBabyMessage: Timestamp.now()
+        }, { merge: true });
       }
-    } catch (error: any) {
-      // Handle permission errors gracefully
-      if (error.code === 'permission-denied') {
-        console.log('Permission denied for baby messages, skipping...');
-      } else {
-        console.error('Error checking baby messages:', error);
-      }
+    } catch (error) {
+      console.error('Error checking baby messages:', error);
     }
   }
 
-  // Check baby development notifications (morning and night)
+  // Check baby development notifications
   private async checkBabyDevelopmentNotifications(): Promise<void> {
     const user = auth.currentUser;
     if (!user) return;
@@ -326,118 +356,283 @@ export class MobileNotificationService {
       
       if (!reminderSettings?.babyDevelopment?.enabled) return;
 
+      const dueDate = data.dueDate?.toDate();
+      const currentWeek = this.calculateCurrentWeek(dueDate);
       const now = new Date();
       const currentTime = format(now, 'HH:mm');
-      const today = startOfDay(now);
-      
-      const morningTime = reminderSettings.babyDevelopment.morningTime || '08:00';
-      const nightTime = reminderSettings.babyDevelopment.nightTime || '20:00';
 
-      // Check for morning notification
-      if (currentTime === morningTime) {
-        const lastMorningNotification = data.lastBabyDevelopmentMorning;
+      // Check morning notification
+      if (currentTime === reminderSettings.babyDevelopment.morningTime) {
+        const today = startOfDay(now);
+        const notificationsRef = collection(firestore, 'users', user.uid, 'notifications');
+        const q = query(
+          notificationsRef,
+          where('type', '==', 'baby_development_morning'),
+          where('scheduledTime', '>=', Timestamp.fromDate(today))
+        );
+
+        const snapshot = await getDocs(q);
         
-        if (!lastMorningNotification || !isToday(lastMorningNotification.toDate())) {
-          const currentWeek = this.calculateCurrentWeek(data.dueDate?.toDate());
-          const morningMessage = this.getBabyDevelopmentMessage(currentWeek, 'morning', reminderSettings.babyDevelopment);
-
+        if (snapshot.empty) {
+          const message = this.getBabyDevelopmentMessage(currentWeek, 'morning', reminderSettings.babyDevelopment);
+          
           await this.sendNotification({
             type: 'baby_development_morning',
-            title: '🌅 Good Morning! Baby Development Update',
-            body: morningMessage,
+            title: '👶 Good Morning, Mommy!',
+            body: message,
             scheduledTime: now,
             userId: user.uid,
-            data: { week: currentWeek, type: 'morning' }
+            data: { week: currentWeek, timeOfDay: 'morning' },
+            sound: true
           });
-
-          // Update last morning notification time
-          await setDoc(userDocRef, { lastBabyDevelopmentMorning: Timestamp.now() }, { merge: true });
         }
       }
 
-      // Check for night notification
-      if (currentTime === nightTime) {
-        const lastNightNotification = data.lastBabyDevelopmentNight;
-        
-        if (!lastNightNotification || !isToday(lastNightNotification.toDate())) {
-          const currentWeek = this.calculateCurrentWeek(data.dueDate?.toDate());
-          const nightMessage = this.getBabyDevelopmentMessage(currentWeek, 'night', reminderSettings.babyDevelopment);
+      // Check night notification
+      if (currentTime === reminderSettings.babyDevelopment.nightTime) {
+        const today = startOfDay(now);
+        const notificationsRef = collection(firestore, 'users', user.uid, 'notifications');
+        const q = query(
+          notificationsRef,
+          where('type', '==', 'baby_development_night'),
+          where('scheduledTime', '>=', Timestamp.fromDate(today))
+        );
 
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+          const message = this.getBabyDevelopmentMessage(currentWeek, 'night', reminderSettings.babyDevelopment);
+          
           await this.sendNotification({
             type: 'baby_development_night',
-            title: '🌙 Good Night! Baby Development Summary',
-            body: nightMessage,
+            title: '👶 Good Night, Mommy!',
+            body: message,
             scheduledTime: now,
             userId: user.uid,
-            data: { week: currentWeek, type: 'night' }
+            data: { week: currentWeek, timeOfDay: 'night' },
+            sound: true
           });
-
-          // Update last night notification time
-          await setDoc(userDocRef, { lastBabyDevelopmentNight: Timestamp.now() }, { merge: true });
         }
       }
-    } catch (error: any) {
-      // Handle permission errors gracefully
-      if (error.code === 'permission-denied') {
-        console.log('Permission denied for baby development notifications, skipping...');
-      } else {
-        console.error('Error checking baby development notifications:', error);
-      }
+    } catch (error) {
+      console.error('Error checking baby development notifications:', error);
     }
   }
 
-  // Send notification
+  // Send notification with sound and store in Firestore
   async sendNotification(notification: Omit<ReminderNotification, 'id' | 'completed'>): Promise<void> {
     if (this.permission !== 'granted') return;
 
     try {
       // Store notification in Firestore
-      const notificationRef = doc(collection(firestore, 'users', notification.userId, 'reminders'));
+      const notificationsRef = collection(firestore, 'users', notification.userId, 'notifications');
       const notificationData = {
         ...notification,
-        id: notificationRef.id,
         completed: false,
-        scheduledTime: Timestamp.fromDate(notification.scheduledTime)
+        scheduledTime: Timestamp.fromDate(notification.scheduledTime),
+        createdAt: Timestamp.now(),
+        sound: notification.sound || false,
+        read: false
       };
 
-      await setDoc(notificationRef, notificationData);
+      const docRef = await addDoc(notificationsRef, notificationData);
+      const notificationId = docRef.id;
+
+      console.log('Notification stored in Firestore:', notificationId);
+
+      // Create the full notification object
+      const fullNotification: ReminderNotification = {
+        ...notification,
+        id: notificationId,
+        completed: false
+      };
 
       // Send push notification
       if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
         try {
           const registration = await navigator.serviceWorker.ready;
-          await registration.showNotification(notification.title, {
+          
+          const options: NotificationOptions = {
             body: notification.body,
             icon: '/images/icon.png',
             badge: '/images/icon.png',
-            tag: `reminder-${notification.type}`,
-            data: notification.data,
+            tag: `reminder-${notification.type}-${notificationId}`,
+            data: {
+              ...notification.data,
+              notificationId,
+              type: notification.type
+            },
             requireInteraction: true,
-            actions: [
-              {
-                action: 'complete',
-                title: 'Complete',
-                icon: '/images/icon.png'
-              },
-              {
-                action: 'dismiss',
-                title: 'Dismiss',
-                icon: '/images/icon.png'
-              }
-            ],
-            vibrate: [200, 100, 200]
-          });
+            silent: !notification.sound
+          };
+
+          await registration.showNotification(notification.title, options);
+
+          // Play sound if enabled
+          if (notification.sound) {
+            this.playNotificationSound(notification.type);
+          }
+
+          // Show mobile popup for mobile devices
+          if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+            // Small delay to ensure the popup appears after the notification
+            setTimeout(() => {
+              this.showMobilePopup(fullNotification);
+            }, 500);
+          }
+
+          console.log('Push notification sent:', notification.title);
         } catch (swError) {
           console.error('Error showing notification:', swError);
+          
+          // Fallback: show mobile popup even if service worker fails
+          if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+            this.showMobilePopup(fullNotification);
+          }
+        }
+      } else {
+        // Fallback for browsers without service worker support
+        if (notification.sound) {
+          this.playNotificationSound(notification.type);
+        }
+        
+        // Show mobile popup as fallback
+        if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+          this.showMobilePopup(fullNotification);
         }
       }
+
+      // Always show mobile popup for important notifications
+      if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+        // Ensure popup is shown even if other methods fail
+        setTimeout(() => {
+          this.showMobilePopup(fullNotification);
+        }, 1000);
+      }
     } catch (error: any) {
-      // Handle permission errors gracefully
-      if (error.code === 'permission-denied') {
-        console.log('Permission denied for storing notification, skipping...');
-      } else {
+      if (error.code !== 'permission-denied') {
         console.error('Error sending notification:', error);
       }
+    }
+  }
+
+  // Play notification sound with different tones for different notification types
+  private playNotificationSound(notificationType?: string): void {
+    try {
+      if (typeof window !== 'undefined' && 'AudioContext' in window) {
+        if (!this.audioContext) {
+          this.audioContext = new AudioContext();
+        }
+
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+
+        // Different sound patterns for different notification types
+        let frequencies: number[] = [];
+        let durations: number[] = [];
+
+        switch (notificationType) {
+          case 'water_intake':
+            // Gentle water drop sound
+            frequencies = [800, 600, 800, 1000];
+            durations = [0.1, 0.1, 0.1, 0.2];
+            break;
+          case 'baby_message':
+            // Sweet baby chime
+            frequencies = [523, 659, 784, 659]; // C, E, G, E
+            durations = [0.15, 0.15, 0.15, 0.2];
+            break;
+          case 'doctor_appointment':
+            // Professional reminder tone
+            frequencies = [440, 554, 659, 440]; // A, C#, E, A
+            durations = [0.2, 0.2, 0.2, 0.3];
+            break;
+          case 'baby_development_morning':
+            // Morning wake-up tone
+            frequencies = [659, 784, 880, 784]; // E, G, A, G
+            durations = [0.15, 0.15, 0.15, 0.25];
+            break;
+          case 'baby_development_night':
+            // Gentle night tone
+            frequencies = [440, 523, 440, 392]; // A, C, A, G
+            durations = [0.2, 0.2, 0.2, 0.3];
+            break;
+          default:
+            // Default notification sound
+            frequencies = [800, 600, 800];
+            durations = [0.1, 0.1, 0.2];
+        }
+
+        const startTime = this.audioContext.currentTime;
+        let currentTime = startTime;
+
+        frequencies.forEach((freq, index) => {
+          oscillator.frequency.setValueAtTime(freq, currentTime);
+          currentTime += durations[index];
+        });
+
+        gainNode.gain.setValueAtTime(0.3, startTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + currentTime);
+
+        oscillator.start(startTime);
+        oscillator.stop(startTime + currentTime);
+      }
+    } catch (error) {
+      console.error('Error playing notification sound:', error);
+    }
+  }
+
+  // Play a simple notification tone (fallback)
+  private playSimpleNotificationSound(): void {
+    try {
+      if (typeof window !== 'undefined' && 'AudioContext' in window) {
+        if (!this.audioContext) {
+          this.audioContext = new AudioContext();
+        }
+
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+
+        oscillator.frequency.setValueAtTime(800, this.audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(600, this.audioContext.currentTime + 0.1);
+        oscillator.frequency.setValueAtTime(800, this.audioContext.currentTime + 0.2);
+
+        gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + 0.3);
+      }
+    } catch (error) {
+      console.error('Error playing simple notification sound:', error);
+    }
+  }
+
+  // Show mobile popup notification
+  private showMobilePopup(notification: ReminderNotification): void {
+    try {
+      // Create custom event for mobile popup
+      const popupEvent = new CustomEvent('mobileNotificationPopup', {
+        detail: {
+          id: notification.id,
+          type: notification.type,
+          title: notification.title,
+          body: notification.body,
+          data: notification.data,
+          timestamp: new Date()
+        }
+      });
+
+      window.dispatchEvent(popupEvent);
+      console.log('Mobile popup event dispatched:', notification.title);
+    } catch (error) {
+      console.error('Error showing mobile popup:', error);
     }
   }
 
@@ -450,124 +645,118 @@ export class MobileNotificationService {
 
   // Get baby message based on week
   private getBabyMessage(week: number): string {
-    const messages = {
+    const messages: { [key: number]: string } = {
       1: "Welcome to your pregnancy journey! I'm just a tiny cell right now, but I'm growing fast! 💕",
       2: "I'm implanting in your uterus! You might not feel anything yet, but I'm here! 🌱",
       3: "My neural tube is forming! This is crucial for my brain and spine development! 🧠",
       4: "My heart is starting to beat! It's the most amazing sound you'll ever hear! 💓",
       5: "I'm about the size of a sesame seed! My major organs are beginning to form! 🌱",
-      6: "My tiny arms and legs are starting to develop! I'm growing so fast! 👶",
-      7: "I'm about the size of a blueberry! My brain is developing rapidly! 🫐",
-      8: "My fingers and toes are forming! I'm becoming more human-like every day! ✋",
-      9: "I'm about the size of a grape! My major organs are almost fully formed! 🍇",
-      10: "I'm officially a fetus now! My critical development period is almost complete! 🎉",
-      11: "I'm about the size of a lime! I'm starting to move, but you can't feel me yet! 🍋",
-      12: "First trimester complete! I'm about the size of a plum! 🍑",
-      13: "I'm about the size of a lemon! My bones are hardening! 🍋",
-      14: "I'm about the size of a peach! My facial features are becoming more defined! 🍑",
-      15: "I'm about the size of an apple! I can make sucking motions! 🍎",
-      16: "I'm about the size of an avocado! My heart is pumping 25 quarts of blood daily! 🥑",
-      17: "I'm about the size of a pear! I'm practicing breathing movements! 🍐",
-      18: "I'm about the size of a sweet potato! I can hear your voice now! 🍠",
-      19: "I'm about the size of a mango! My skin is becoming less transparent! 🥭",
-      20: "Halfway there! I'm about the size of a banana! 🍌",
-      21: "I'm about the size of a carrot! I'm developing my sleep cycles! 🥕",
-      22: "I'm about the size of a coconut! My taste buds are developing! 🥥",
-      23: "I'm about the size of a grapefruit! I can hear sounds from outside! 🍊",
-      24: "I'm about the size of a corn! My face is almost fully formed! 🌽",
-      25: "I'm about the size of a cauliflower! I'm gaining weight rapidly! 🥦",
-      26: "I'm about the size of a lettuce! My eyes are opening! 🥬",
-      27: "I'm about the size of a broccoli! I'm practicing breathing! 🥦",
-      28: "I'm about the size of an eggplant! I can dream now! 🍆",
-      29: "I'm about the size of a butternut squash! I'm getting stronger! 🎃",
-      30: "I'm about the size of a cabbage! I'm gaining about half a pound per week! 🥬",
-      31: "I'm about the size of a pineapple! I'm developing my immune system! 🍍",
-      32: "I'm about the size of a squash! I'm practicing breathing and sucking! 🎃",
-      33: "I'm about the size of a durian! My bones are hardening! 🥭",
-      34: "I'm about the size of a cantaloupe! I'm gaining weight rapidly! 🍈",
-      35: "I'm about the size of a honeydew! I'm almost ready to meet you! 🍈",
-      36: "I'm about the size of a romaine lettuce! I'm in the final stretch! 🥬",
-      37: "I'm about the size of a Swiss chard! I'm considered full-term soon! 🥬",
-      38: "I'm about the size of a leek! I'm gaining about an ounce per day! 🧅",
-      39: "I'm about the size of a mini watermelon! I'm almost ready! 🍉",
-      40: "I'm about the size of a small pumpkin! I'm ready to meet you! 🎃"
+      6: "I'm growing so fast! My heart is beating and my brain is developing! 💕",
+      7: "I'm the size of a blueberry now! My arms and legs are starting to form! 🫐",
+      8: "I'm about the size of a kidney bean! I'm moving around, but you can't feel me yet! 🫘",
+      9: "I'm the size of a grape! My tiny fingers and toes are forming! 🍇",
+      10: "I'm about the size of a kumquat! My major organs are all in place! 🍊",
+      11: "I'm the size of a fig! I'm starting to look more like a baby! 🫒",
+      12: "I'm about the size of a lime! My reflexes are developing! 🍋",
+      13: "I'm the size of a lemon! I can make sucking motions now! 🍋",
+      14: "I'm about the size of a peach! My facial muscles are working! 🍑",
+      15: "I'm the size of an apple! I can move my arms and legs! 🍎",
+      16: "I'm about the size of an avocado! I'm practicing breathing! 🥑",
+      17: "I'm the size of a pear! I can hear your voice now! 🍐",
+      18: "I'm about the size of a sweet potato! I'm getting stronger! 🍠",
+      19: "I'm the size of a mango! I'm developing my sense of taste! 🥭",
+      20: "I'm about the size of a banana! I'm halfway there! 🍌",
+      21: "I'm the size of a carrot! I'm very active now! 🥕",
+      22: "I'm about the size of a coconut! I can hear your heartbeat! 🥥",
+      23: "I'm the size of a grapefruit! My face is fully formed! 🍊",
+      24: "I'm about the size of an ear of corn! I'm growing rapidly! 🌽",
+      25: "I'm the size of a cauliflower! I'm practicing breathing! 🥦",
+      26: "I'm about the size of a head of lettuce! My eyes are opening! 🥬",
+      27: "I'm the size of a broccoli! I'm getting chubbier! 🥦",
+      28: "I'm about the size of an eggplant! I'm very responsive! 🍆",
+      29: "I'm the size of a butternut squash! I'm getting stronger! 🎃",
+      30: "I'm about the size of a cabbage! I'm practicing breathing! 🥬",
+      31: "I'm the size of a pineapple! I'm gaining weight fast! 🍍",
+      32: "I'm about the size of a large jicama! I'm very active! 🥔",
+      33: "I'm the size of a pineapple! I'm practicing breathing! 🍍",
+      34: "I'm about the size of a cantaloupe! I'm getting ready! 🍈",
+      35: "I'm the size of a honeydew melon! I'm almost ready! 🍈",
+      36: "I'm about the size of a romaine lettuce! I'm getting bigger! 🥬",
+      37: "I'm the size of a Swiss chard! I'm full-term soon! 🥬",
+      38: "I'm about the size of a leek! I'm ready to meet you! 🧅",
+      39: "I'm the size of a mini watermelon! I'm almost here! 🍉",
+      40: "I'm about the size of a small pumpkin! I'm ready to be born! 🎃"
     };
 
-    return messages[week as keyof typeof messages] || "I'm growing and developing every day! 💕";
+    return messages[week] || "I'm growing and developing every day! I can't wait to meet you! 💕";
   }
 
-  // Get baby development message based on week and time of day
+  // Get baby development message
   private getBabyDevelopmentMessage(week: number, timeOfDay: 'morning' | 'night', settings: BabyDevelopmentSettings): string {
     const developmentData = this.getBabyDevelopmentData(week);
-    let message = '';
+    let message = `Good ${timeOfDay}, Mommy! I'm now ${developmentData.size} and ${developmentData.milestone}! 💕`;
 
-    if (timeOfDay === 'morning') {
-      message = `🌅 Good morning! Here's your baby's development update for Week ${week}:\n\n`;
-    } else {
-      message = `🌙 Good night! Here's your baby's development summary for Week ${week}:\n\n`;
+    if (settings.includeTips) {
+      message += `\n\n💡 Tip: ${developmentData.tip}`;
     }
 
     if (settings.includeSize) {
-      message += `📏 Size: ${developmentData.size} (${developmentData.fruit})\n`;
+      message += `\n\n📏 I'm about the size of a ${developmentData.fruit}!`;
     }
 
     if (settings.includeMilestones) {
-      message += `🎯 Key Milestone: ${developmentData.milestone}\n`;
-    }
-
-    if (settings.includeTips) {
-      message += `💡 Tip: ${developmentData.tip}\n`;
+      message += `\n\n🎯 Milestone: ${developmentData.milestone}`;
     }
 
     return message;
   }
 
-  // Get baby development data based on week
+  // Get baby development data
   private getBabyDevelopmentData(week: number): any {
-    const developmentData: { [key: number]: any } = {
-      1: { size: "0.1mm", fruit: "Poppy seed", milestone: "Fertilization occurs", tip: "Start taking prenatal vitamins" },
-      2: { size: "0.2mm", fruit: "Sesame seed", milestone: "Implantation in uterus", tip: "Continue healthy diet" },
-      3: { size: "0.3mm", fruit: "Poppy seed", milestone: "Neural tube forms", tip: "Take folic acid" },
-      4: { size: "0.4mm", fruit: "Sesame seed", milestone: "Heart starts beating", tip: "Schedule ultrasound" },
-      5: { size: "0.5mm", fruit: "Sesame seed", milestone: "Major organs begin forming", tip: "Avoid raw fish" },
-      6: { size: "0.6mm", fruit: "Lentil", milestone: "Arm and leg buds appear", tip: "Stay hydrated" },
-      7: { size: "1.3cm", fruit: "Blueberry", milestone: "Brain developing rapidly", tip: "Get adequate rest" },
-      8: { size: "1.6cm", fruit: "Kidney bean", milestone: "All major organs present", tip: "First trimester screening" },
-      9: { size: "2.3cm", fruit: "Grape", milestone: "Major organs almost fully formed", tip: "Eat protein-rich foods" },
-      10: { size: "3.1cm", fruit: "Kumquat", milestone: "Officially a fetus", tip: "Stay active with doctor's approval" },
-      11: { size: "4.1cm", fruit: "Lime", milestone: "Baby starts moving", tip: "Continue prenatal vitamins" },
-      12: { size: "5.4cm", fruit: "Lime", milestone: "First trimester complete", tip: "Schedule second trimester screening" },
-      13: { size: "7.4cm", fruit: "Lemon", milestone: "Bones hardening", tip: "Eat calcium-rich foods" },
-      14: { size: "8.7cm", fruit: "Peach", milestone: "Facial features defined", tip: "Practice relaxation techniques" },
-      15: { size: "10.1cm", fruit: "Apple", milestone: "Can make sucking motions", tip: "Stay active with walking" },
-      16: { size: "11.6cm", fruit: "Avocado", milestone: "Heart pumping 25 quarts daily", tip: "Listen to music together" },
-      17: { size: "13cm", fruit: "Pear", milestone: "Practicing breathing movements", tip: "Practice deep breathing" },
-      18: { size: "14.2cm", fruit: "Sweet potato", milestone: "Can hear your voice", tip: "Talk and sing to baby" },
-      19: { size: "15.3cm", fruit: "Mango", milestone: "Skin becoming less transparent", tip: "Apply stretch mark cream" },
-      20: { size: "16.4cm", fruit: "Banana", milestone: "Halfway there!", tip: "Start planning nursery" },
-      21: { size: "26.7cm", fruit: "Carrot", milestone: "Developing sleep cycles", tip: "Establish bedtime routine" },
-      22: { size: "27.8cm", fruit: "Coconut", milestone: "Taste buds developing", tip: "Eat varied healthy foods" },
-      23: { size: "28.9cm", fruit: "Grapefruit", milestone: "Can hear sounds from outside", tip: "Avoid loud noises" },
-      24: { size: "30cm", fruit: "Corn", milestone: "Face almost fully formed", tip: "Take belly photos" },
-      25: { size: "34.6cm", fruit: "Cauliflower", milestone: "Gaining weight rapidly", tip: "Eat nutrient-dense foods" },
-      26: { size: "35.6cm", fruit: "Lettuce", milestone: "Eyes opening", tip: "Use gentle lighting" },
-      27: { size: "36.6cm", fruit: "Broccoli", milestone: "Practicing breathing", tip: "Practice breathing exercises" },
-      28: { size: "37.6cm", fruit: "Eggplant", milestone: "Can dream now", tip: "Create peaceful environment" },
-      29: { size: "38.6cm", fruit: "Butternut squash", milestone: "Getting stronger", tip: "Practice gentle exercises" },
-      30: { size: "39.9cm", fruit: "Cabbage", milestone: "Gaining half pound per week", tip: "Eat small frequent meals" },
-      31: { size: "41.1cm", fruit: "Pineapple", milestone: "Developing immune system", tip: "Get plenty of rest" },
-      32: { size: "42.4cm", fruit: "Squash", milestone: "Practicing breathing and sucking", tip: "Practice breastfeeding positions" },
-      33: { size: "43.7cm", fruit: "Durian", milestone: "Bones hardening", tip: "Continue calcium intake" },
-      34: { size: "45cm", fruit: "Cantaloupe", milestone: "Gaining weight rapidly", tip: "Monitor weight gain" },
-      35: { size: "46.2cm", fruit: "Honeydew", milestone: "Almost ready to meet you", tip: "Pack hospital bag" },
-      36: { size: "47.4cm", fruit: "Romaine lettuce", milestone: "Final stretch", tip: "Finalize birth plan" },
-      37: { size: "48.6cm", fruit: "Swiss chard", milestone: "Considered full-term soon", tip: "Monitor for labor signs" },
-      38: { size: "49.8cm", fruit: "Leek", milestone: "Gaining ounce per day", tip: "Stay calm and prepared" },
-      39: { size: "50.7cm", fruit: "Mini watermelon", milestone: "Almost ready", tip: "Trust your body" },
-      40: { size: "51.2cm", fruit: "Small pumpkin", milestone: "Ready to meet you", tip: "Welcome your baby!" }
+    const developmentData: { [key: number]: { size: string; fruit: string; milestone: string; tip: string } } = {
+      1: { size: "a tiny cell", fruit: "poppy seed", milestone: "just beginning to form", tip: "Start taking prenatal vitamins if you haven't already!" },
+      2: { size: "implanting", fruit: "sesame seed", milestone: "implanting in your uterus", tip: "Rest well and stay hydrated!" },
+      3: { size: "forming neural tube", fruit: "poppy seed", milestone: "neural tube developing", tip: "Folic acid is crucial for my brain development!" },
+      4: { size: "heart starting to beat", fruit: "poppy seed", milestone: "heart beginning to form", tip: "Avoid alcohol and smoking completely!" },
+      5: { size: "major organs forming", fruit: "sesame seed", milestone: "organs developing", tip: "Eat a balanced diet rich in nutrients!" },
+      6: { size: "heart beating", fruit: "lentil", milestone: "heart beating regularly", tip: "Stay active with gentle exercises!" },
+      7: { size: "arms and legs forming", fruit: "blueberry", milestone: "limb buds appearing", tip: "Get plenty of rest and sleep!" },
+      8: { size: "moving around", fruit: "kidney bean", milestone: "starting to move", tip: "Stay hydrated and drink plenty of water!" },
+      9: { size: "fingers and toes forming", fruit: "grape", milestone: "digits developing", tip: "Eat small, frequent meals to manage nausea!" },
+      10: { size: "major organs in place", fruit: "kumquat", milestone: "organs fully formed", tip: "Continue with prenatal care appointments!" },
+      11: { size: "looking more like a baby", fruit: "fig", milestone: "facial features developing", tip: "Practice relaxation techniques!" },
+      12: { size: "reflexes developing", fruit: "lime", milestone: "reflexes starting", tip: "Start thinking about childbirth classes!" },
+      13: { size: "making sucking motions", fruit: "lemon", milestone: "sucking reflex", tip: "Stay active with pregnancy-safe exercises!" },
+      14: { size: "facial muscles working", fruit: "peach", milestone: "facial expressions", tip: "Eat protein-rich foods for my growth!" },
+      15: { size: "moving arms and legs", fruit: "apple", milestone: "coordinated movements", tip: "Practice good posture to support your growing belly!" },
+      16: { size: "practicing breathing", fruit: "avocado", milestone: "breathing practice", tip: "Stay hydrated and avoid overheating!" },
+      17: { size: "hearing your voice", fruit: "pear", milestone: "hearing developing", tip: "Talk and sing to me often!" },
+      18: { size: "getting stronger", fruit: "sweet potato", milestone: "muscle development", tip: "Continue with gentle exercises!" },
+      19: { size: "developing taste", fruit: "mango", milestone: "taste buds forming", tip: "Eat a variety of healthy foods!" },
+      20: { size: "halfway there", fruit: "banana", milestone: "halfway point", tip: "Start planning for my arrival!" },
+      21: { size: "very active", fruit: "carrot", milestone: "increased activity", tip: "Monitor my movements daily!" },
+      22: { size: "hearing your heartbeat", fruit: "coconut", milestone: "hearing your heart", tip: "Stay calm and relaxed!" },
+      23: { size: "face fully formed", fruit: "grapefruit", milestone: "facial features complete", tip: "Continue with prenatal vitamins!" },
+      24: { size: "growing rapidly", fruit: "ear of corn", milestone: "rapid growth phase", tip: "Eat nutrient-dense foods!" },
+      25: { size: "practicing breathing", fruit: "cauliflower", milestone: "breathing practice", tip: "Stay active and mobile!" },
+      26: { size: "eyes opening", fruit: "head of lettuce", milestone: "eyes opening", tip: "Get plenty of rest!" },
+      27: { size: "getting chubbier", fruit: "broccoli", milestone: "weight gain", tip: "Eat healthy fats for my brain!" },
+      28: { size: "very responsive", fruit: "eggplant", milestone: "responding to stimuli", tip: "Play music and talk to me!" },
+      29: { size: "getting stronger", fruit: "butternut squash", milestone: "muscle strength", tip: "Stay active with walking!" },
+      30: { size: "practicing breathing", fruit: "cabbage", milestone: "breathing practice", tip: "Practice relaxation techniques!" },
+      31: { size: "gaining weight fast", fruit: "pineapple", milestone: "rapid weight gain", tip: "Eat protein-rich foods!" },
+      32: { size: "very active", fruit: "large jicama", milestone: "high activity level", tip: "Monitor my movements!" },
+      33: { size: "practicing breathing", fruit: "pineapple", milestone: "breathing practice", tip: "Stay hydrated!" },
+      34: { size: "getting ready", fruit: "cantaloupe", milestone: "preparing for birth", tip: "Pack your hospital bag!" },
+      35: { size: "almost ready", fruit: "honeydew melon", milestone: "nearly full-term", tip: "Rest and prepare for labor!" },
+      36: { size: "getting bigger", fruit: "romaine lettuce", milestone: "continued growth", tip: "Stay comfortable and rest!" },
+      37: { size: "full-term soon", fruit: "Swiss chard", milestone: "full-term approaching", tip: "Be ready for labor signs!" },
+      38: { size: "ready to meet you", fruit: "leek", milestone: "ready for birth", tip: "Watch for labor signs!" },
+      39: { size: "almost here", fruit: "mini watermelon", milestone: "any day now", tip: "Stay calm and ready!" },
+      40: { size: "ready to be born", fruit: "small pumpkin", milestone: "ready for birth", tip: "You're ready to meet me!" }
     };
 
-    return developmentData[week] || developmentData[12];
+    return developmentData[week] || { size: "growing", fruit: "baby", milestone: "developing", tip: "Take care of yourself!" };
   }
 
   // Schedule water intake reminder
@@ -576,26 +765,29 @@ export class MobileNotificationService {
     if (!user) return;
 
     try {
-      const userDocRef = doc(firestore, 'users', user.uid);
-      await setDoc(userDocRef, {
-        waterIntakeReminders: [reminder]
-      }, { merge: true });
+      const remindersRef = collection(firestore, 'users', user.uid, 'reminders');
+      await addDoc(remindersRef, {
+        ...reminder,
+        type: 'water_intake',
+        scheduledTime: Timestamp.now(),
+        completed: false
+      });
     } catch (error) {
       console.error('Error scheduling water intake reminder:', error);
     }
   }
 
-  // Schedule doctor appointment reminder
+  // Schedule doctor appointment
   async scheduleDoctorAppointment(appointment: DoctorAppointment): Promise<void> {
     const user = auth.currentUser;
     if (!user) return;
 
     try {
       const appointmentsRef = collection(firestore, 'users', user.uid, 'appointments');
-      await setDoc(doc(appointmentsRef), {
+      await addDoc(appointmentsRef, {
         ...appointment,
         date: Timestamp.fromDate(appointment.date),
-        reminderSent: false
+        createdAt: Timestamp.now()
       });
     } catch (error) {
       console.error('Error scheduling doctor appointment:', error);
@@ -617,12 +809,37 @@ export class MobileNotificationService {
         scheduledTime: doc.data().scheduledTime.toDate()
       })) as ReminderNotification[];
     } catch (error: any) {
-      // Handle permission errors gracefully
       if (error.code === 'permission-denied') {
         console.log('Permission denied for getting reminders, returning empty array');
         return [];
       } else {
         console.error('Error getting reminders:', error);
+        return [];
+      }
+    }
+  }
+
+  // Get all notifications for a user
+  async getNotifications(): Promise<ReminderNotification[]> {
+    const user = auth.currentUser;
+    if (!user) return [];
+
+    try {
+      const notificationsRef = collection(firestore, 'users', user.uid, 'notifications');
+      const notificationsQuery = query(notificationsRef, orderBy('scheduledTime', 'desc'));
+      const notificationsSnapshot = await getDocs(notificationsQuery);
+
+      return notificationsSnapshot.docs.map(doc => ({
+        ...doc.data(),
+        scheduledTime: doc.data().scheduledTime.toDate(),
+        createdAt: doc.data().createdAt?.toDate()
+      })) as ReminderNotification[];
+    } catch (error: any) {
+      if (error.code === 'permission-denied') {
+        console.log('Permission denied for getting notifications, returning empty array');
+        return [];
+      } else {
+        console.error('Error getting notifications:', error);
         return [];
       }
     }
@@ -635,15 +852,68 @@ export class MobileNotificationService {
 
     try {
       const reminderRef = doc(firestore, 'users', user.uid, 'reminders', reminderId);
-      await setDoc(reminderRef, { completed: true }, { merge: true });
+      await updateDoc(reminderRef, { completed: true });
     } catch (error: any) {
-      // Handle permission errors gracefully
-      if (error.code === 'permission-denied') {
-        console.log('Permission denied for marking reminder completed, skipping...');
-      } else {
+      if (error.code !== 'permission-denied') {
         console.error('Error marking reminder completed:', error);
       }
     }
+  }
+
+  // Mark notification as completed
+  async markNotificationCompleted(notificationId: string): Promise<void> {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      const notificationRef = doc(firestore, 'users', user.uid, 'notifications', notificationId);
+      await updateDoc(notificationRef, { completed: true });
+    } catch (error: any) {
+      if (error.code !== 'permission-denied') {
+        console.error('Error marking notification completed:', error);
+      }
+    }
+  }
+
+  // Mark notification as read
+  async markNotificationAsRead(notificationId: string): Promise<void> {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      const notificationRef = doc(firestore, 'users', user.uid, 'notifications', notificationId);
+      await updateDoc(notificationRef, { read: true });
+    } catch (error: any) {
+      if (error.code !== 'permission-denied') {
+        console.error('Error marking notification as read:', error);
+      }
+    }
+  }
+
+  // Test notification function for development
+  async testNotification(type: 'water_intake' | 'baby_message' | 'doctor_appointment' = 'baby_message'): Promise<void> {
+    const user = auth.currentUser;
+    if (!user) {
+      console.log('No user logged in for test notification');
+      return;
+    }
+
+    const testNotification: Omit<ReminderNotification, 'id' | 'completed'> = {
+      type,
+      title: type === 'water_intake' ? '💧 Water Reminder' : 
+             type === 'baby_message' ? '👶 Message from Baby' : 
+             '🏥 Appointment Reminder',
+      body: type === 'water_intake' ? 'Time to stay hydrated! Drink a glass of water for you and your baby.' :
+            type === 'baby_message' ? 'Hi Mommy! I love you so much and I\'m growing strong every day! 💕' :
+            'You have an upcoming doctor appointment. Don\'t forget to prepare!',
+      scheduledTime: new Date(),
+      userId: user.uid,
+      data: { test: true },
+      sound: true
+    };
+
+    await this.sendNotification(testNotification);
+    console.log('Test notification sent:', type);
   }
 }
 

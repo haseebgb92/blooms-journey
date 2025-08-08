@@ -20,7 +20,7 @@ import QRCode from "qrcode.react";
 import { sendPartnerInvitation } from "@/ai/flows/sendPartnerInvitation";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { RemindersList } from "@/components/bloom-journey/RemindersList";
+
 
 export default function ProfilePage() {
   const { toast } = useToast();
@@ -530,21 +530,7 @@ export default function ProfilePage() {
                 </CardContent>
             </Card>
 
-            {/* Reminders Section */}
-            <Card className="shadow-sm">
-                <CardHeader>
-                    <CardTitle className="text-lg font-headline flex items-center gap-2">
-                        <Clock className="w-5 h-5 text-orange-500" />
-                        Active Reminders
-                    </CardTitle>
-                    <CardDescription>
-                        Your scheduled reminders and notifications
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="p-4">
-                    <RemindersList />
-                </CardContent>
-            </Card>
+
 
             <Card className="shadow-sm">
                 <CardHeader>

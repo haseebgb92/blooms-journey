@@ -72,10 +72,12 @@ self.addEventListener('push', (event) => {
     tag: notificationData.tag,
     data: notificationData.data,
     requireInteraction: true,
+    silent: false, // Enable sound for all notifications
+    vibrate: [200, 100, 200],
     actions: [
       {
-        action: 'view',
-        title: 'View',
+        action: 'mark-read',
+        title: 'Mark as Read',
         icon: '/images/icon.png'
       },
       {
@@ -83,9 +85,7 @@ self.addEventListener('push', (event) => {
         title: 'Dismiss',
         icon: '/images/icon.png'
       }
-    ],
-    vibrate: [200, 100, 200],
-    sound: 'default'
+    ]
   };
 
   event.waitUntil(
@@ -99,53 +99,110 @@ self.addEventListener('notificationclick', (event) => {
   
   event.notification.close();
 
-  if (event.action === 'dismiss') {
-    return;
-  }
-
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then((clientList) => {
-        // Check if there's already a window/tab open with the target URL
-        for (const client of clientList) {
-          if (client.url.includes(event.notification.data.url) && 'focus' in client) {
+  // Handle notification actions
+  if (event.action === 'mark-read') {
+    // Mark notification as read
+    const notificationId = event.notification.data?.notificationId;
+    if (notificationId) {
+      // Send message to main thread to mark as read
+      self.clients.matchAll().then(clients => {
+        clients.forEach(client => {
+          client.postMessage({
+            type: 'MARK_NOTIFICATION_READ',
+            notificationId: notificationId
+          });
+        });
+      });
+    }
+  } else if (event.action === 'dismiss') {
+    // Just close the notification
+    event.notification.close();
+  } else {
+    // Default action - open the app
+    event.waitUntil(
+      clients.matchAll({ type: 'window' }).then(windowClients => {
+        // Check if there is already a window/tab open with the target URL
+        for (let i = 0; i < windowClients.length; i++) {
+          const client = windowClients[i];
+          if (client.url.includes('/home') && 'focus' in client) {
             return client.focus();
           }
         }
-        
-        // If no window/tab is open, open a new one
+        // If no window/tab is already open, open a new one
         if (clients.openWindow) {
-          return clients.openWindow(event.notification.data.url || '/home');
+          return clients.openWindow('/home');
         }
       })
-  );
+    );
+  }
 });
 
 // Background sync for notifications
 self.addEventListener('sync', (event) => {
-  console.log('Background sync:', event);
+  console.log('Background sync event:', event);
   
-  if (event.tag === 'background-notification-sync') {
+  if (event.tag === 'notification-sync') {
     event.waitUntil(syncNotifications());
   }
 });
 
-// Function to sync notifications in background
-async function syncNotifications() {
-  try {
-    // This would typically fetch new notifications from your API
-    // For now, we'll just log the sync attempt
-    console.log('Syncing notifications in background...');
-  } catch (error) {
-    console.error('Error syncing notifications:', error);
-  }
-}
-
-// Message event for communication with main app
+// Handle messages from the main thread
 self.addEventListener('message', (event) => {
   console.log('Service Worker received message:', event.data);
   
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
+  if (event.data && event.data.type === 'PLAY_NOTIFICATION_SOUND') {
+    // Play notification sound
+    playNotificationSound(event.data.notificationType);
   }
-}); 
+});
+
+// Play notification sound function
+function playNotificationSound(notificationType) {
+  try {
+    // Create audio context for notification sound
+    const audioContext = new (self.AudioContext || self.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    // Different sound patterns for different notification types
+    let frequencies = [];
+    let durations = [];
+
+    switch (notificationType) {
+      case 'water_intake':
+        frequencies = [800, 600, 800, 1000];
+        durations = [0.1, 0.1, 0.1, 0.2];
+        break;
+      case 'baby_message':
+        frequencies = [523, 659, 784, 659];
+        durations = [0.15, 0.15, 0.15, 0.2];
+        break;
+      case 'doctor_appointment':
+        frequencies = [440, 554, 659, 440];
+        durations = [0.2, 0.2, 0.2, 0.3];
+        break;
+      default:
+        frequencies = [800, 600, 800];
+        durations = [0.1, 0.1, 0.2];
+    }
+
+    const startTime = audioContext.currentTime;
+    let currentTime = startTime;
+
+    frequencies.forEach((freq, index) => {
+      oscillator.frequency.setValueAtTime(freq, currentTime);
+      currentTime += durations[index];
+    });
+
+    gainNode.gain.setValueAtTime(0.3, startTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + currentTime);
+
+    oscillator.start(startTime);
+    oscillator.stop(startTime + currentTime);
+  } catch (error) {
+    console.error('Error playing notification sound:', error);
+  }
+} 

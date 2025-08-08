@@ -14,6 +14,7 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { BabyNotificationPopup } from '@/components/bloom-journey/BabyNotificationPopup';
 import { FloatingNotificationButton } from '@/components/layout/FloatingNotificationButton';
+import { MobileNotificationPopup } from '@/components/bloom-journey/MobileNotificationPopup';
 import { initializeAppDataSync } from '@/lib/appDataService';
 
 export default function RootLayout({
@@ -151,6 +152,7 @@ export default function RootLayout({
             {/* Mobile Notifications - Only show on mobile */}
             {isClient && isAuthenticated && isMobile && <BabyNotificationPopup />}
             {isClient && isMobile && <FloatingNotificationButton />}
+            {isClient && isMobile && <MobileNotificationPopup />}
           </div>
           <Toaster />
         </ThemeProvider>

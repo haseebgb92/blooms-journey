@@ -46,8 +46,12 @@ export default function LoginPage() {
   const handleSocialSignIn = async (provider: 'google' | 'apple') => {
     setIsSocialLoading(provider);
     const authProvider = provider === 'google' ? googleProvider : appleProvider;
+    
     try {
+      console.log(`Attempting ${provider} sign-in...`);
       const result = await signInWithPopup(auth, authProvider);
+      console.log(`${provider} sign-in successful:`, result.user.email);
+      
       toast({
         title: "Signed In Successfully",
         description: "Welcome back!",
@@ -71,6 +75,7 @@ export default function LoginPage() {
         router.push('/agreement');
       }
     } catch (error: any) {
+      console.error(`${provider} sign-in error:`, error);
       let errorMessage = "Unable to sign in. Please try again.";
       
       if (error.code === 'auth/popup-closed-by-user') {
@@ -81,6 +86,14 @@ export default function LoginPage() {
         errorMessage = "An account already exists with this email using a different sign-in method.";
       } else if (error.code === 'auth/network-request-failed') {
         errorMessage = "Network error. Please check your connection and try again.";
+      } else if (error.code === 'auth/unauthorized-domain') {
+        errorMessage = "This domain is not authorized for Google sign-in. Please contact support.";
+      } else if (error.code === 'auth/operation-not-allowed') {
+        errorMessage = "Google sign-in is not enabled. Please contact support.";
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        errorMessage = "Sign in was cancelled. Please try again.";
+      } else if (error.code === 'auth/popup-blocked') {
+        errorMessage = "Pop-up was blocked by your browser. Please allow pop-ups for this site and try again.";
       }
       
       toast({

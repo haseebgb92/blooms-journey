@@ -135,9 +135,9 @@ export function Journal() {
     };
 
     return (
-        <Card className="hover:shadow-lg transition-shadow duration-300">
+        <Card className="bg-gradient-to-br from-pink-50 to-purple-50 border-2 border-pink-200 shadow-lg hover:shadow-primary/10 transition-shadow duration-300">
             <CardHeader>
-                <CardTitle className="font-headline text-2xl">Personal Journal</CardTitle>
+                <CardTitle className="font-headline text-2xl text-pink-800">Personal Journal</CardTitle>
                 <CardDescription>Track symptoms, weight, and more</CardDescription>
             </CardHeader>
             <CardContent>
